@@ -4,12 +4,14 @@
 #
 confFile="/home/johan/ownCloud/xxLINK/httpd-cleaned.conf"
 
-foundurl=false
-founddirectory=false
+#foundurl=false
+#founddirectory=false
 prefix="/htbin/htimage"
 suffix="\/*.map"
+wwwSource="/home/local/www"
+wwwDest="/var/www"
 
-echo "domain","rootDir","indexPage"
+#echo "domain","serverName","rootDir","indexPage"
 
 while IFS= read -r line
     do
@@ -23,6 +25,7 @@ while IFS= read -r line
         # Indicates start of new site definition
         foundurl=true
         url="$(awk -F '[[:blank:]]+' '{print $2}' <<< $line )"
+        serverName=${url#"www."}
         #echo $url
     fi
 
@@ -33,16 +36,27 @@ while IFS= read -r line
             # Remove prefix, suffix
             directory=${mapPath#$prefix}
             directory=${directory%$suffix}
-            founddirectory=true
-            foundurl=false
-            founddirectory=false
+            # Replace source www directory with destination directory
+            directoryDest="${directory/$wwwSource/$wwwDest}"
+
+            #founddirectory=true
+            #foundurl=false
+            #founddirectory=false
             #echo $directory
         fi
     fi
 
     if [[ $line == "Welcome"* ]]; then
         indexPage="$(awk -F '[[:blank:]]+' '{print $2}' <<< $line )"
-        echo $url,$directory,$indexPage
+        #echo $url,$serverName,$directoryDest,$indexPage
+        # Output Apache Virtual Host config items 
+        echo "<VirtualHost *:80>"
+        echo "ServerName" $serverName
+        echo "ServerAlias" $url
+        echo "DocumentRoot" $directoryDest
+        echo "RedirectMatch ^/$" '"/'$indexPage'"'
+        echo "</VirtualHost>"
+        echo
     fi
 
 done < "$confFile"
