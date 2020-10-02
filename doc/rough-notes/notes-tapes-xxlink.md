@@ -407,8 +407,6 @@ For convenience we combine all Apache site config entries into one file (`etc/ap
 2. Add new *VirtualHost* entry to Apache config file:
 
         <VirtualHost *:80>
-            ServerName schiphol.nl:80
-
             ServerAdmin webmaster@localhost
             ServerName schiphol.nl
             ServerAlias www.schiphol.nl
