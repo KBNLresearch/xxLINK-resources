@@ -9,7 +9,7 @@ founddirectory=false
 prefix="/htbin/htimage"
 suffix="\/*.map"
 
-echo "domain","rootDir"
+echo "domain","rootDir","indexPage"
 
 while IFS= read -r line
     do
@@ -34,11 +34,15 @@ while IFS= read -r line
             directory=${mapPath#$prefix}
             directory=${directory%$suffix}
             founddirectory=true
-            echo $url,$directory
             foundurl=false
             founddirectory=false
             #echo $directory
         fi
+    fi
+
+    if [[ $line == "Welcome"* ]]; then
+        indexPage="$(awk -F '[[:blank:]]+' '{print $2}' <<< $line )"
+        echo $url,$directory,$indexPage
     fi
 
 done < "$confFile"
