@@ -78,6 +78,7 @@ def launchSubProcess(args):
 
     return exitStatus, outputAsString, errorsAsString
 
+
 def readApacheConfig(configFile, wwwIn, wwwOut):
     """
     Read Apache config file, extract interesting bits and return
@@ -137,6 +138,7 @@ def readApacheConfig(configFile, wwwIn, wwwOut):
                 siteInfo['indexPage'] = indexPage
     return sites
 
+
 def writeConfig(site, configOut):
     """Write output Apache config records for site"""
 
@@ -147,6 +149,7 @@ def writeConfig(site, configOut):
         fOut.write("DocumentRoot " + site["pathOut"] + "\n")
         fOut.write('RedirectMatch ^/$ "/' + site["indexPage"] + '"\n')
         fOut.write("</VirtualHost>" + "\n\n")
+
 
 def copyFiles(site):
     """Copy site's folder structure and apply correct permissions"""
