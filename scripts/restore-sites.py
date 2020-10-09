@@ -6,11 +6,13 @@ Restore sites from xxLINK tape
 Author: Johan van der Knijff
 Requirements:
 
-1. Unix/Linux environment with 'rsync' tool installed
+- Unix/Linux environment with 'rsync' and 'find' tools installed
 
 Example command line:
 
-python3 ~/kb/xxLINK-resources/scripts/restore-sites.py /home/johan/kb/xxLINK/tapes-DDS/2/file000001/home/local/www /home/johan/kb/xxLINK/siteData-DDS/2/www /home/johan/kb/xxLINK/tapes-DDS/2/file000001/home/local/etc/httpd.conf /home/johan/kb/xxLINK/siteData-DDS/2/etc/sites.conf
+sudo python3 ~/kb/xxLINK-resources/scripts/restore-sites.py /home/johan/kb/xxLINK/tapes-DDS/2/file000001/home/local/www /home/johan/kb/xxLINK/siteData-DDS/2/www /home/johan/kb/xxLINK/tapes-DDS/2/file000001/home/local/etc/httpd.conf /home/johan/kb/xxLINK/siteData-DDS/2/etc/sites.conf
+
+NOTE: running as sudo is needed bc of permissions set in source data.
 
 """
 
@@ -20,6 +22,7 @@ import csv
 import argparse
 import subprocess as sub
 from shutil import which
+from distutils.dir_util import copy_tree
 
 
 def parseCommandLine(parser):
@@ -145,21 +148,33 @@ def writeConfig(site, configOut):
         fOut.write('RedirectMatch ^/$ "/' + site["indexPage"] + '"\n')
         fOut.write("</VirtualHost>" + "\n\n")
 
-    """
-    echo "<VirtualHost *:80>"
-    echo "ServerName" $serverName
-    echo "ServerAlias" $url
-    echo "DocumentRoot" $directoryDest
-    echo "RedirectMatch ^/$" '"/'$indexPage'"'
-    echo "</VirtualHost>"
-    """
+def copyFiles(site):
+    """Copy site's folder structure and apply correct permissions"""
+    sourceDir = os.path.abspath(site["pathIn"])
+    destDir = os.path.abspath(site["pathOut"])
+
+    if os.path.exists(sourceDir):
+        try:
+            copy_tree(sourceDir, destDir, verbose=1, update=1, preserve_symlinks=1)
+            #print(sourceDir, destDir)
+        except:
+            print("ERROR: copying " + sourceDir, file=sys.stderr)
+            raise
+
+    else:
+        print("WARNING: directory " + sourceDir + " does not exist", file=sys.stderr)
+
 
 def main():
     """Main function"""
 
-    # Check if rsync tool is installed
+    # Check if rsync and find tools are installed
     if which('rsync') is None:
         msg = "'rsync' tool is not installed"
+        errorExit(msg)
+
+    if which('find') is None:
+        msg = "'find' tool is not installed"
         errorExit(msg)
 
     # Parse arguments from command line
@@ -182,10 +197,10 @@ def main():
     if os.path.isfile(httpdConfOut):
         os.remove(httpdConfOut)
 
-    # Write output config for each site
+    # For each site, write output config and copy data over to destination
     for site in sites:
         writeConfig(site, httpdConfOut)
-
+        copyFiles(site)
 
 if __name__ == "__main__":
     main()
