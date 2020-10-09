@@ -91,7 +91,6 @@ def readApacheConfig(configFile, wwwIn, wwwOut):
     with open(configFile) as configIn:
         for line in configIn:
             if line.startswith("MultiHost"):
-                newSite = True
                 # Reset record counters
                 noMaps = 0
                 noExecs = 0
@@ -99,7 +98,9 @@ def readApacheConfig(configFile, wwwIn, wwwOut):
 
                 # Append previous siteInfo dictionary to list
                 try:
-                    sites.append(siteInfo)
+                    # Ignore test entries
+                    if not siteInfo['serverName'].startswith("test"): 
+                        sites.append(siteInfo)
                 except UnboundLocalError:
                     # siteInfo doesn't exist atv start of first processed site
                     pass
