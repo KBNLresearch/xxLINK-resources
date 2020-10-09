@@ -8,6 +8,13 @@ sudo tar -xvzf tapes-DDS-extracted.tar.gz > /dev/null
 
 Note: extracting as regular user will result in permission-related errors for some directories, so better to extract as sudo. Some of the resulting folders/files will be inaccessible because of owners/permissions, but we'll fix that while copying them over to /var/www below. 
 
+## Interesting data
+
+- dir `/home/www.xxlink.nl` contains logs (1994/95)
+- dir `/home/local/www` contains 26 folders that each hold a web site!
+- dir `/home/local/etc` contains [httpd configuration file](https://httpd.apache.org/docs/2.4/configuring.html) `httpd.conf` which defines the configuration for all sites. 
+
+
 ## Copy one site to var/www
 
 ```
@@ -15,6 +22,20 @@ sudo rsync -avhl ~/kb/xxLINK/tapes-DDS/2/file000001/home/local/www/schiphol /var
 sudo find /var/www/schiphol -type d -exec chmod 755 {} \;
 sudo find /var/www/schiphol -type f -exec chmod 644 {} \;
 sudo find /var/www/schiphol/cgi-bin -type f -exec chmod 755 {} \;
+```
+
+## Python script for config reading/writing copying
+
+[Here](../scripts/restore-sites.py).
+
+Example:
+
+```
+sudo python3 ~/kb/xxLINK-resources/scripts/restore-sites.py \ 
+    /home/johan/kb/xxLINK/tapes-DDS/2/file000001/home/local/www \
+    /home/johan/kb/xxLINK/siteData-DDS/2/www \
+    /home/johan/kb/xxLINK/tapes-DDS/2/file000001/home/local/etc/httpd.conf \
+    /home/johan/kb/xxLINK/siteData-DDS/2/etc/sites.conf
 ```
 
 ## Configure
