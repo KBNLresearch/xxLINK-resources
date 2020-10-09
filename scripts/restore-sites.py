@@ -4,9 +4,6 @@
 Restore sites from xxLINK tape
 
 Author: Johan van der Knijff
-Requirements:
-
-- Unix/Linux environment with 'rsync' and 'find' tools installed
 
 Example command line:
 
@@ -170,15 +167,6 @@ def copyFiles(site):
 
 def main():
     """Main function"""
-
-    # Check if rsync and find tools are installed
-    if which('rsync') is None:
-        msg = "'rsync' tool is not installed"
-        errorExit(msg)
-
-    if which('find') is None:
-        msg = "'find' tool is not installed"
-        errorExit(msg)
 
     # Parse arguments from command line
     parser = argparse.ArgumentParser(description='Restore sites from xxLINK tape')
