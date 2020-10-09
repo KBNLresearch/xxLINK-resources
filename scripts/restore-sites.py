@@ -75,22 +75,11 @@ def launchSubProcess(args):
 
     return exitStatus, outputAsString, errorsAsString
 
-
-def main():
-    """Main function"""
-
-    # Check if rsync tool is installed
-    if which('rsync') is None:
-        msg = "'rsync' tool is not installed"
-        errorExit(msg)
-
-    # Parse arguments from command line
-    parser = argparse.ArgumentParser(description='Restore sites from xxLINK tape')
-    args = parseCommandLine(parser)
-    wwwIn = args.wwwIn
-    wwwOut = args.wwwOut
-    httpdConfIn = args.httpdConfIn
-    httpdConfOut = args.httpdConfOut
+def readApacheConfig(configFile, wwwIn, wwwOut):
+    """
+    Read Apache config file, extract interesting bits and return
+    list with dictionary for each site
+    """
 
     # Prefix / suffix used in Map entries (need to be stripped)
     mapPrefix="/htbin/htimage/home/local/www"
@@ -99,9 +88,7 @@ def main():
     # List that holds individual site dictionaries
     sites = []
 
-    newSite = False
-    
-    with open(httpdConfIn) as configIn:
+    with open(configFile) as configIn:
         for line in configIn:
             if line.startswith("MultiHost"):
                 newSite = True
@@ -144,9 +131,59 @@ def main():
                 indexPage = line.split()[1].strip()
                 noWelcomes += 1
                 siteInfo['indexPage'] = indexPage
+    return sites
 
-    print(sites)
+def writeConfig(site, configOut):
+    """Write output Apache config records for site"""
 
+    with open(configOut, "a", encoding="utf-8") as fOut:
+        fOut.write("<VirtualHost *:80>\n")
+        fOut.write("ServerName " + site["serverName"] + "\n")
+        fOut.write("ServerAlias " + site["url"] + "\n")
+        fOut.write("DocumentRoot " + site["pathOut"] + "\n")
+        fOut.write('RedirectMatch ^/$ "/' + site["indexPage"] + '"\n')
+        fOut.write("</VirtualHost>" + "\n\n")
+
+    """
+    echo "<VirtualHost *:80>"
+    echo "ServerName" $serverName
+    echo "ServerAlias" $url
+    echo "DocumentRoot" $directoryDest
+    echo "RedirectMatch ^/$" '"/'$indexPage'"'
+    echo "</VirtualHost>"
+    """
+
+def main():
+    """Main function"""
+
+    # Check if rsync tool is installed
+    if which('rsync') is None:
+        msg = "'rsync' tool is not installed"
+        errorExit(msg)
+
+    # Parse arguments from command line
+    parser = argparse.ArgumentParser(description='Restore sites from xxLINK tape')
+    args = parseCommandLine(parser)
+    wwwIn = args.wwwIn
+    wwwOut = args.wwwOut
+    httpdConfIn = args.httpdConfIn
+    httpdConfOut = args.httpdConfOut
+
+    # Read info on sites from config file
+    sites = readApacheConfig(httpdConfIn, wwwIn, wwwOut)
+
+    # Create directory for output config
+    dirConfOut = os.path.dirname(httpdConfOut)
+    if not os.path.exists(dirConfOut):
+        os.makedirs(dirConfOut)
+    
+    # Remove output config file if it already exists
+    if os.path.isfile(httpdConfOut):
+        os.remove(httpdConfOut)
+
+    # Write output config for each site
+    for site in sites:
+        writeConfig(site, httpdConfOut)
 
 
 if __name__ == "__main__":
