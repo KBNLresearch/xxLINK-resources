@@ -158,9 +158,22 @@ def copyFiles(site):
             copy_tree(sourceDir, destDir, verbose=1, update=1, preserve_symlinks=1)
             #print(sourceDir, destDir)
         except:
-            print("ERROR: copying " + sourceDir, file=sys.stderr)
+            print("ERROR copying " + sourceDir, file=sys.stderr)
             raise
 
+        # Update permissions
+        for root, dirs, files in os.walk(destDir):  
+            for d in dirs:
+                try:
+                    os.chmod(os.path.join(root, d), 0o755)
+                except OSError:
+                    print("ERROR updating permissions for " + d, file=sys.stderr)
+
+            for f in files:
+                try:
+                    os.chmod(os.path.join(root, f), 0o644)
+                except OSError:
+                    print("ERROR updating permissions for " + f, file=sys.stderr)
     else:
         print("WARNING: directory " + sourceDir + " does not exist", file=sys.stderr)
 
@@ -188,9 +201,11 @@ def main():
     if os.path.isfile(httpdConfOut):
         os.remove(httpdConfOut)
 
-    # For each site, write output config and copy data over to destination
+    # For each site, write output config, hosts entries
+    # and copy data over to destination
     for site in sites:
         writeConfig(site, httpdConfOut)
+        # TODO: write entries for hosts file!
         copyFiles(site)
 
 if __name__ == "__main__":
