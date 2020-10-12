@@ -137,14 +137,16 @@ def readApacheConfig(configFile, wwwIn, wwwOut):
                 # Only read 1st map entry for a site
                 execPath = line.split()[2].strip()
 
-                if execPath != "/home/local/www/cgi-bin/*":
+                if execPath not in ["/home/local/www/cgi-bin/*",
+                                    "/home/local/www//cgi-bin/*"]:
                     # Remove suffix
                     execPath = execPath.replace(execSuffix, "")
                     
-                    # Construct source and destination paths (prefixes
-                    # same as Map entry)
-                    execPathIn = execPath.replace(mapPrefix, wwwIn)
-                    execPathOut = execPath.replace(mapPrefix, wwwOut)
+                    # Construct source and destination paths
+                    execPathIn = execPath.replace("/home/local/www", wwwIn)
+                    execPathOut = execPath.replace("/home/local/www", wwwOut)
+
+                    #print(execPathIn, execPathOut)
 
                     # Store execPathIn and execPathout pair as dictionary and
                     # add to list
@@ -246,7 +248,7 @@ def main():
     dirConfOut = os.path.dirname(httpdConfOut)
     if not os.path.exists(dirConfOut):
         os.makedirs(dirConfOut)
-    
+
     # Remove output config file if it already exists
     if os.path.isfile(httpdConfOut):
         os.remove(httpdConfOut)
