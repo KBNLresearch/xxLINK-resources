@@ -85,6 +85,7 @@ def readApacheConfig(configFile, wwwIn, wwwOut):
     # Prefix / suffix used in Map entries (need to be stripped)
     mapPrefix="/htbin/htimage/home/local/www"
     mapSuffix="/*.map"
+    execSuffix="/*"
 
     # List that holds individual site dictionaries
     sites = []
@@ -100,14 +101,17 @@ def readApacheConfig(configFile, wwwIn, wwwOut):
                 # Append previous siteInfo dictionary to list
                 try:
                     # Ignore test entries
-                    if not siteInfo['serverName'].startswith("test"): 
+                    if not siteInfo['serverName'].startswith("test"):
+                        siteInfo['execPaths'] = execPaths
                         sites.append(siteInfo)
                 except UnboundLocalError:
-                    # siteInfo doesn't exist atv start of first processed site
+                    # siteInfo, execPathsIn and execPathsOut don't
+                    # exist at start of first processed site
                     pass
 
-                # Intialise empty siteInfo dictionary
+                # Intialise empty siteInfo dictionary and execPath list
                 siteInfo = {}
+                execPaths = []
 
                 url = line.split()[1].strip()
                 siteInfo['url'] = url
@@ -129,10 +133,28 @@ def readApacheConfig(configFile, wwwIn, wwwOut):
                     siteInfo['pathOut'] = pathOut
                     noMaps += 1
 
+            if line.startswith("Exec"):
+                # Only read 1st map entry for a site
+                execPath = line.split()[2].strip()
+
+                if execPath != "/home/local/www/cgi-bin/*":
+                    # Remove suffix
+                    execPath = execPath.replace(execSuffix, "")
+                    
+                    # Construct source and destination paths (prefixes
+                    # same as Map entry)
+                    execPathIn = execPath.replace(mapPrefix, wwwIn)
+                    execPathOut = execPath.replace(mapPrefix, wwwOut)
+
+                    # Store execPathIn and execPathout pair as dictionary and
+                    # add to list
+                    execPaths.append({execPathIn:execPathOut})
+
             if line.startswith("Welcome") and noWelcomes == 0:
                 indexPage = line.split()[1].strip()
                 noWelcomes += 1
                 siteInfo['indexPage'] = indexPage
+
     return sites
 
 
@@ -149,14 +171,19 @@ def writeConfig(site, configOut):
 
 
 def copyFiles(site):
-    """Copy site's folder structure and apply correct permissions"""
+    """Copy site's folder structure and apply correct permissions:
+    - Dirs to 755
+    - Files in source dir to 644
+    - Files in exec (cgi-bin) dirs to 755
+    """
     sourceDir = os.path.abspath(site["pathIn"])
     destDir = os.path.abspath(site["pathOut"])
+    execDirs = site["execPaths"]
 
+    # Source dir tree
     if os.path.exists(sourceDir):
         try:
             copy_tree(sourceDir, destDir, verbose=1, update=1, preserve_symlinks=1)
-            #print(sourceDir, destDir)
         except:
             print("ERROR copying " + sourceDir, file=sys.stderr)
             raise
@@ -176,6 +203,29 @@ def copyFiles(site):
                     print("ERROR updating permissions for " + f, file=sys.stderr)
     else:
         print("WARNING: directory " + sourceDir + " does not exist", file=sys.stderr)
+
+    # Executable (cgi-bin) dirs (can be multiple or none at all)
+    for d in execDirs:
+        for i, o in d.items():
+            execSourceDir = os.path.abspath(i)
+            execDestDir = os.path.abspath(o)
+
+            if os.path.exists(execSourceDir):
+                try:
+                    copy_tree(execSourceDir, execDestDir, verbose=1, update=1, preserve_symlinks=1)
+                except:
+                    print("ERROR copying " + execSourceDir, file=sys.stderr)
+                    raise
+
+                # Update permissions
+                for root, dirs, files in os.walk(execDestDir):  
+                    for f in files:
+                        try:
+                            os.chmod(os.path.join(root, f), 0o755)
+                        except OSError:
+                            print("ERROR updating permissions for " + f, file=sys.stderr)
+            else:
+                print("WARNING: directory " + execSourceDir + " does not exist", file=sys.stderr)
 
 
 def main():
