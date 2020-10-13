@@ -90,6 +90,18 @@ Results in 403 Forbidden. Probably possible to change through config, but don't 
 
 browser.fixup.dns_first_for_single_words set to True
 
+
+## DDS tapes with website data
+
+- 2 (file000001/home/local/www)
+- 4 (file000001/home/local/www)
+- 5 (file000001/home/local/www)
+- 12 (file000003/local/www)
+- 14 (/file000001/home/local/www)
+- 18? (file000002/html/www), doesn't look like production location.
+
+## DLT tapes with website data
+
 ## Resources
 
 - [Server-side Preservation of Dynamic Websites](https://publications.beeldengeluid.nl/pub/633/) (mentions ReproZip, need to look at this)

@@ -171,6 +171,26 @@ def writeConfig(site, configOut):
         fOut.write('RedirectMatch ^/$ "/' + site["indexPage"] + '"\n')
         fOut.write("</VirtualHost>" + "\n\n")
 
+def fixSymLinks(folder):
+    for root, _, files in os.walk(folder):
+        for f in files:
+            thisFile = os.path.join(root, f)
+            try:
+                os.stat(thisFile)
+            except OSError:
+                # Read link target
+                linkTarget = os.readlink(thisFile)
+                print(thisFile, linkTarget, file=sys.stderr)
+                # Leave relative links unchanged, update absolute links to 
+                # destination path 
+                #if os.path.isabs(linkTarget):
+                #    linkTarget = os.path.join(root, linkTarget)
+
+                #if os.path.isdir(linkTarget):
+                
+                print(linkTarget, file=sys.stderr)
+                    
+                #print('file %s does not exist or is a broken symlink' % thisFile, file=sys.stderr)
 
 def copyFiles(site):
     """Copy site's folder structure and apply correct permissions:
@@ -182,29 +202,40 @@ def copyFiles(site):
     destDir = os.path.abspath(site["pathOut"])
     execDirs = site["execPaths"]
 
+    print("======PROCESSING SOURCE DIR " + sourceDir)
+
     # Source dir tree
     if os.path.exists(sourceDir):
+        """
         try:
+            # Note copy_tree by default aborts on broken symlinks, hence preserve_symlinks=1
+            # However this means that these broken  
             copy_tree(sourceDir, destDir, verbose=1, update=1, preserve_symlinks=1)
         except:
             print("ERROR copying " + sourceDir, file=sys.stderr)
             raise
+        """
+        # Search destination dir for broken symbolic links, fix them and copy
+        # underlying data
+        fixSymLinks(destDir)
 
         # Update permissions
-        for root, dirs, files in os.walk(destDir):  
+        for root, dirs, files in os.walk(destDir): 
             for d in dirs:
                 try:
                     os.chmod(os.path.join(root, d), 0o755)
                 except OSError:
-                    print("ERROR updating permissions for " + d, file=sys.stderr)
+                    print("ERROR updating permissions for directory " + os.path.abspath(d), file=sys.stderr)
 
             for f in files:
                 try:
                     os.chmod(os.path.join(root, f), 0o644)
                 except OSError:
-                    print("ERROR updating permissions for " + f, file=sys.stderr)
+                    print("ERROR updating permissions for file " + os.path.abspath(f), file=sys.stderr)
     else:
         print("WARNING: directory " + sourceDir + " does not exist", file=sys.stderr)
+
+    print("======PROCESSING EXEC DIRS====")
 
     # Executable (cgi-bin) dirs (can be multiple or none at all)
     for d in execDirs:
@@ -213,11 +244,13 @@ def copyFiles(site):
             execDestDir = os.path.abspath(o)
 
             if os.path.exists(execSourceDir):
+                """
                 try:
                     copy_tree(execSourceDir, execDestDir, verbose=1, update=1, preserve_symlinks=1)
                 except:
                     print("ERROR copying " + execSourceDir, file=sys.stderr)
                     raise
+                """
 
                 # Update permissions
                 for root, dirs, files in os.walk(execDestDir):  
@@ -225,7 +258,7 @@ def copyFiles(site):
                         try:
                             os.chmod(os.path.join(root, f), 0o755)
                         except OSError:
-                            print("ERROR updating permissions for " + f, file=sys.stderr)
+                            print("ERROR updating permissions for file " + os.path.abspath(f), file=sys.stderr)
             else:
                 print("WARNING: directory " + execSourceDir + " does not exist", file=sys.stderr)
 
