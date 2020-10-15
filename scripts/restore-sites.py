@@ -19,6 +19,7 @@ import csv
 import argparse
 import subprocess as sub
 from shutil import which
+from shutil import copyfile
 from distutils.dir_util import copy_tree
 
 
@@ -184,27 +185,36 @@ def fixSymLinks(folder, dirIn, dirOut):
                 # and output paths
                 # /home/local/NFIC/docs --> 
                 if os.path.isabs(linkTarget):
-                    linkTargetIn = os.path.join(dirIn, linkTarget[1:])
-                    linkTargetOut = os.path.join(dirOut, linkTarget.replace("/home/", ""))
-                    print(linkTargetIn, linkTargetOut, file=sys.stderr)
+                    linkTargetIn = os.path.join(dirIn, linkTarget[1:])                    
                 else:
                     linkTargetIn = os.path.join(root, linkTarget)
+                    print("linkTarget: " + linkTarget + "linkTargetIn: " + linkTargetIn, file=sys.stderr)
+
+                linkTargetOut = os.path.join(dirOut, linkTarget.replace("/home/", ""))
+                print("linkTargetOut: " + linkTargetOut, file=sys.stderr)
+                #print(linkTargetIn, linkTargetOut, file=sys.stderr)
 
                 if os.path.isdir(linkTargetIn):
                     # Copy directory to outDir
                     try:
-                        # Note copy_tree by default aborts on broken symlinks, hence preserve_symlinks=1
-                        # However this means that these broken  
                         copy_tree(linkTargetIn, linkTargetOut, verbose=1, update=1, preserve_symlinks=1)
                     except:
                         print("ERROR copying " + linkTargetIn, file=sys.stderr)
                         raise
-                
-                # Update symlink
-                linkTmp = os.path.join(root, "templink")
+                elif os.path.isfile(linkTargetIn):
+                    try:
+                        copyfile(linkTargetIn, linkTargetOut)
+                    except:
+                        print("ERROR copying " + linkTargetIn, file=sys.stderr)
+                        raise
 
-                os.symlink(linkTargetOut, os.path.join(root, linkTmp))
-                os.replace(linkTmp, thisFile)
+                # Update symlink
+                try:
+                    linkTmp = os.path.join(root, "templink")
+                    os.symlink(linkTargetOut, os.path.join(root, linkTmp))
+                    os.replace(linkTmp, thisFile)
+                except UnboundLocalError:
+                    print("ERROR updating symlink %s" % linkTargetIn, file=sys.stderr)
                     
                 #print('file %s does not exist or is a broken symlink' % thisFile, file=sys.stderr)
 
@@ -218,7 +228,7 @@ def copyFiles(site, dirIn, dirOut):
     destDir = os.path.abspath(site["pathOut"])
     execDirs = site["execPaths"]
 
-    print("======PROCESSING SOURCE DIR " + sourceDir)
+    print("======PROCESSING SOURCE DIR " + sourceDir, file=sys.stderr)
 
     # Source dir tree
     if os.path.exists(sourceDir):
@@ -237,20 +247,22 @@ def copyFiles(site, dirIn, dirOut):
         # Update permissions
         for root, dirs, files in os.walk(destDir): 
             for d in dirs:
+                thisDir = os.path.join(root, d)
                 try:
-                    os.chmod(os.path.join(root, d), 0o755)
+                    os.chmod(thisDir, 0o755)
                 except OSError:
-                    print("ERROR updating permissions for directory " + os.path.abspath(d), file=sys.stderr)
+                    print("ERROR updating permissions for directory " + thisDir, file=sys.stderr)
 
             for f in files:
+                thisFile = os.path.join(root, f)
                 try:
-                    os.chmod(os.path.join(root, f), 0o644)
+                    os.chmod(thisFile, 0o644)
                 except OSError:
-                    print("ERROR updating permissions for file " + os.path.abspath(f), file=sys.stderr)
+                    print("ERROR updating permissions for file " + thisFile, file=sys.stderr)
     else:
         print("WARNING: directory " + sourceDir + " does not exist", file=sys.stderr)
 
-    print("======PROCESSING EXEC DIRS====")
+    print("======PROCESSING EXEC DIRS====", file=sys.stderr)
 
     # Executable (cgi-bin) dirs (can be multiple or none at all)
     for d in execDirs:
@@ -264,13 +276,18 @@ def copyFiles(site, dirIn, dirOut):
                 except:
                     print("ERROR copying " + execSourceDir, file=sys.stderr)
 
+                # Search destination dir for broken symbolic links, fix them and copy
+                # underlying data
+                fixSymLinks(execDestDir, dirIn, dirOut)
+
                 # Update permissions
                 for root, dirs, files in os.walk(execDestDir):  
                     for f in files:
+                        thisFile = os.path.join(root, f)
                         try:
-                            os.chmod(os.path.join(root, f), 0o755)
+                            os.chmod(thisFile, 0o755)
                         except OSError:
-                            print("ERROR updating permissions for file " + os.path.abspath(f), file=sys.stderr)
+                            print("ERROR updating permissions for file " + thisFile, file=sys.stderr)
             else:
                 print("WARNING: directory " + execSourceDir + " does not exist", file=sys.stderr)
 
