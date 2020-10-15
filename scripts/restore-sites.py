@@ -7,7 +7,7 @@ Author: Johan van der Knijff
 
 Example command line:
 
-sudo python3 ~/kb/xxLINK-resources/scripts/restore-sites.py /home/johan/kb/xxLINK/tapes-DDS/2/file000001/home/local/www /home/johan/kb/xxLINK/siteData-DDS/2/www /home/johan/kb/xxLINK/tapes-DDS/2/file000001/home/local/etc/httpd.conf /home/johan/kb/xxLINK/siteData-DDS/2/etc/sites.conf
+sudo python3 ~/kb/xxLINK-resources/scripts/restore-sites.py /home/johan/kb/xxLINK/tapes-DDS/2/file000001 /home/johan/kb/xxLINK/siteData-DDS/2
 
 NOTE: running as sudo is needed bc of permissions set in source data.
 
@@ -144,8 +144,6 @@ def readApacheConfig(dirIn, dirOut):
                     execPathIn = execPath.replace("/home/local/www", wwwIn)
                     execPathOut = execPath.replace("/home/local/www", wwwOut)
 
-                    #print(execPathIn, execPathOut)
-
                     # Store execPathIn and execPathout pair as dictionary and
                     # add to list
                     execPaths.append({execPathIn:execPathOut})
@@ -176,23 +174,21 @@ def fixSymLinks(folder, dirIn, dirOut):
             thisFile = os.path.join(root, f)
             try:
                 os.stat(thisFile)
-            except OSError or FileNotFoundError:
+            except OSError:
                 # Read link target
                 linkTarget = os.readlink(thisFile)
-                print(thisFile, linkTarget, file=sys.stderr)
+                #print(thisFile, linkTarget, file=sys.stderr)
                 
                 # Leave relative links unchanged, update absolute links to input 
                 # and output paths
-                # /home/local/NFIC/docs --> 
                 if os.path.isabs(linkTarget):
                     linkTargetIn = os.path.join(dirIn, linkTarget[1:])                    
                 else:
                     linkTargetIn = os.path.join(root, linkTarget)
-                    print("linkTarget: " + linkTarget + "linkTargetIn: " + linkTargetIn, file=sys.stderr)
+                    #print("linkTarget: " + linkTarget + "linkTargetIn: " + linkTargetIn, file=sys.stderr)
 
                 linkTargetOut = os.path.join(dirOut, linkTarget.replace("/home/", ""))
-                print("linkTargetOut: " + linkTargetOut, file=sys.stderr)
-                #print(linkTargetIn, linkTargetOut, file=sys.stderr)
+                #print("linkTargetOut: " + linkTargetOut, file=sys.stderr)
 
                 if os.path.isdir(linkTargetIn):
                     # Copy directory to outDir
@@ -200,13 +196,13 @@ def fixSymLinks(folder, dirIn, dirOut):
                         copy_tree(linkTargetIn, linkTargetOut, verbose=1, update=1, preserve_symlinks=1)
                     except:
                         print("ERROR copying " + linkTargetIn, file=sys.stderr)
-                        raise
+                        #raise
                 elif os.path.isfile(linkTargetIn):
                     try:
                         copyfile(linkTargetIn, linkTargetOut)
                     except:
                         print("ERROR copying " + linkTargetIn, file=sys.stderr)
-                        raise
+                        #raise
 
                 # Update symlink
                 try:
@@ -215,8 +211,7 @@ def fixSymLinks(folder, dirIn, dirOut):
                     os.replace(linkTmp, thisFile)
                 except UnboundLocalError:
                     print("ERROR updating symlink %s" % linkTargetIn, file=sys.stderr)
-                    
-                #print('file %s does not exist or is a broken symlink' % thisFile, file=sys.stderr)
+
 
 def copyFiles(site, dirIn, dirOut):
     """Copy site's folder structure and apply correct permissions:
@@ -228,7 +223,7 @@ def copyFiles(site, dirIn, dirOut):
     destDir = os.path.abspath(site["pathOut"])
     execDirs = site["execPaths"]
 
-    print("======PROCESSING SOURCE DIR " + sourceDir, file=sys.stderr)
+    print("====== PROCESSING SOURCE DIR " + sourceDir, file=sys.stderr)
 
     # Source dir tree
     if os.path.exists(sourceDir):
@@ -262,13 +257,12 @@ def copyFiles(site, dirIn, dirOut):
     else:
         print("WARNING: directory " + sourceDir + " does not exist", file=sys.stderr)
 
-    print("======PROCESSING EXEC DIRS====", file=sys.stderr)
-
     # Executable (cgi-bin) dirs (can be multiple or none at all)
     for d in execDirs:
         for i, o in d.items():
             execSourceDir = os.path.abspath(i)
             execDestDir = os.path.abspath(o)
+            print("====== PROCESSING EXEC DIR " + execSourceDir, file=sys.stderr)
 
             if os.path.exists(execSourceDir):
                 try:
@@ -302,8 +296,6 @@ def main():
     dirOut = os.path.abspath(args.dirOut)
 
     httpdConfOut = os.path.join(dirOut, "etc/sites.conf")
-
-    #print(dirIn, dirOut, wwwIn, wwwOut, httpdConfIn, httpdConfOut)
 
     # Read info on sites from config file
     sites = readApacheConfig(dirIn, dirOut)
