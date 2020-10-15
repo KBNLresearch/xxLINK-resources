@@ -199,6 +199,12 @@ def fixSymLinks(folder, dirIn, dirOut):
                     except:
                         print("ERROR copying " + linkTargetIn, file=sys.stderr)
                         raise
+                
+                # Update symlink
+                linkTmp = os.path.join(root, "templink")
+
+                os.symlink(linkTargetOut, os.path.join(root, linkTmp))
+                os.replace(linkTmp, thisFile)
                     
                 #print('file %s does not exist or is a broken symlink' % thisFile, file=sys.stderr)
 
@@ -223,7 +229,6 @@ def copyFiles(site, dirIn, dirOut):
             copy_tree(sourceDir, destDir, verbose=1, update=1, preserve_symlinks=1)
         except:
             print("ERROR copying " + sourceDir, file=sys.stderr)
-            raise
 
         # Search destination dir for broken symbolic links, fix them and copy
         # underlying data
@@ -254,13 +259,10 @@ def copyFiles(site, dirIn, dirOut):
             execDestDir = os.path.abspath(o)
 
             if os.path.exists(execSourceDir):
-                """
                 try:
                     copy_tree(execSourceDir, execDestDir, verbose=1, update=1, preserve_symlinks=1)
                 except:
                     print("ERROR copying " + execSourceDir, file=sys.stderr)
-                    raise
-                """
 
                 # Update permissions
                 for root, dirs, files in os.walk(execDestDir):  
