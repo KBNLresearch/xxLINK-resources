@@ -25,22 +25,14 @@ from distutils.dir_util import copy_tree
 def parseCommandLine(parser):
     """Command line parser"""
 
-    parser.add_argument('wwwIn',
+    parser.add_argument('dirIn',
                         action='store',
                         type=str,
-                        help='input www directory')
-    parser.add_argument('wwwOut',
+                        help='input directory')
+    parser.add_argument('dirOut',
                         action='store',
                         type=str,
-                        help='output www directory')
-    parser.add_argument('httpdConfIn',
-                        action='store',
-                        type=str,
-                        help='input httpd.conf file')
-    parser.add_argument('httpdConfOut',
-                        action='store',
-                        type=str,
-                        help='output httpd.conf file')
+                        help='output directory')
 
     # Parse arguments
     arguments = parser.parse_args()
@@ -182,7 +174,8 @@ def fixSymLinks(folder):
                 linkTarget = os.readlink(thisFile)
                 print(thisFile, linkTarget, file=sys.stderr)
                 # Leave relative links unchanged, update absolute links to 
-                # destination path 
+                # destination path
+                # /home/local/NFIC/docs --> 
                 #if os.path.isabs(linkTarget):
                 #    linkTarget = os.path.join(root, linkTarget)
 
@@ -269,10 +262,16 @@ def main():
     # Parse arguments from command line
     parser = argparse.ArgumentParser(description='Restore sites from xxLINK tape')
     args = parseCommandLine(parser)
-    wwwIn = args.wwwIn
-    wwwOut = args.wwwOut
-    httpdConfIn = args.httpdConfIn
-    httpdConfOut = args.httpdConfOut
+    dirIn = os.path.abspath(args.dirIn)
+    dirOut = os.path.abspath(args.dirOut)
+
+    # Input and output locations
+    wwwIn = os.path.join(dirIn, "home/local/www")
+    wwwOut = os.path.join(dirOut, "www")
+    httpdConfIn = os.path.join(dirIn, "home/local/etc/httpd.conf")
+    httpdConfOut = os.path.join(dirOut, "etc/sites.conf")
+
+    #print(dirIn, dirOut, wwwIn, wwwOut, httpdConfIn, httpdConfOut)
 
     # Read info on sites from config file
     sites = readApacheConfig(httpdConfIn, wwwIn, wwwOut)
