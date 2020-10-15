@@ -68,11 +68,16 @@ def launchSubProcess(args):
     return exitStatus, outputAsString, errorsAsString
 
 
-def readApacheConfig(configFile, wwwIn, wwwOut):
+def readApacheConfig(dirIn, dirOut):
     """
     Read Apache config file, extract interesting bits and return
     list with dictionary for each site
     """
+
+    # Construct paths
+    wwwIn = os.path.join(dirIn, "home/local/www")
+    wwwOut = os.path.join(dirOut, "www")
+    configFile = os.path.join(dirIn, "home/local/etc/httpd.conf")
 
     # Prefix / suffix used in Map entries (need to be stripped)
     mapPrefix="/htbin/htimage/home/local/www"
@@ -163,29 +168,41 @@ def writeConfig(site, configOut):
         fOut.write('RedirectMatch ^/$ "/' + site["indexPage"] + '"\n')
         fOut.write("</VirtualHost>" + "\n\n")
 
-def fixSymLinks(folder):
+
+def fixSymLinks(folder, dirIn, dirOut):
     for root, _, files in os.walk(folder):
         for f in files:
             thisFile = os.path.join(root, f)
             try:
                 os.stat(thisFile)
-            except OSError:
+            except OSError or FileNotFoundError:
                 # Read link target
                 linkTarget = os.readlink(thisFile)
                 print(thisFile, linkTarget, file=sys.stderr)
-                # Leave relative links unchanged, update absolute links to 
-                # destination path
-                # /home/local/NFIC/docs --> 
-                #if os.path.isabs(linkTarget):
-                #    linkTarget = os.path.join(root, linkTarget)
-
-                #if os.path.isdir(linkTarget):
                 
-                print(linkTarget, file=sys.stderr)
+                # Leave relative links unchanged, update absolute links to input 
+                # and output paths
+                # /home/local/NFIC/docs --> 
+                if os.path.isabs(linkTarget):
+                    linkTargetIn = os.path.join(dirIn, linkTarget[1:])
+                    linkTargetOut = os.path.join(dirOut, linkTarget.replace("/home/", ""))
+                    print(linkTargetIn, linkTargetOut, file=sys.stderr)
+                else:
+                    linkTargetIn = os.path.join(root, linkTarget)
+
+                if os.path.isdir(linkTargetIn):
+                    # Copy directory to outDir
+                    try:
+                        # Note copy_tree by default aborts on broken symlinks, hence preserve_symlinks=1
+                        # However this means that these broken  
+                        copy_tree(linkTargetIn, linkTargetOut, verbose=1, update=1, preserve_symlinks=1)
+                    except:
+                        print("ERROR copying " + linkTargetIn, file=sys.stderr)
+                        raise
                     
                 #print('file %s does not exist or is a broken symlink' % thisFile, file=sys.stderr)
 
-def copyFiles(site):
+def copyFiles(site, dirIn, dirOut):
     """Copy site's folder structure and apply correct permissions:
     - Dirs to 755
     - Files in source dir to 644
@@ -199,7 +216,7 @@ def copyFiles(site):
 
     # Source dir tree
     if os.path.exists(sourceDir):
-        """
+
         try:
             # Note copy_tree by default aborts on broken symlinks, hence preserve_symlinks=1
             # However this means that these broken  
@@ -207,10 +224,10 @@ def copyFiles(site):
         except:
             print("ERROR copying " + sourceDir, file=sys.stderr)
             raise
-        """
+
         # Search destination dir for broken symbolic links, fix them and copy
         # underlying data
-        fixSymLinks(destDir)
+        fixSymLinks(destDir, dirIn, dirOut)
 
         # Update permissions
         for root, dirs, files in os.walk(destDir): 
@@ -265,16 +282,12 @@ def main():
     dirIn = os.path.abspath(args.dirIn)
     dirOut = os.path.abspath(args.dirOut)
 
-    # Input and output locations
-    wwwIn = os.path.join(dirIn, "home/local/www")
-    wwwOut = os.path.join(dirOut, "www")
-    httpdConfIn = os.path.join(dirIn, "home/local/etc/httpd.conf")
     httpdConfOut = os.path.join(dirOut, "etc/sites.conf")
 
     #print(dirIn, dirOut, wwwIn, wwwOut, httpdConfIn, httpdConfOut)
 
     # Read info on sites from config file
-    sites = readApacheConfig(httpdConfIn, wwwIn, wwwOut)
+    sites = readApacheConfig(dirIn, dirOut)
 
     # Create directory for output config
     dirConfOut = os.path.dirname(httpdConfOut)
@@ -290,7 +303,7 @@ def main():
     for site in sites:
         writeConfig(site, httpdConfOut)
         # TODO: write entries for hosts file!
-        copyFiles(site)
+        copyFiles(site, dirIn, dirOut)
 
 if __name__ == "__main__":
     main()
