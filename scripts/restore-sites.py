@@ -156,17 +156,21 @@ def readApacheConfig(dirIn, dirOut):
     return sites
 
 
-def writeConfig(site, configOut):
+def writeConfig(site, configOut, hostsOut):
     """Write output Apache config records for site"""
 
-    with open(configOut, "a", encoding="utf-8") as fOut:
-        fOut.write("<VirtualHost *:80>\n")
-        fOut.write("ServerName " + site["serverName"] + "\n")
-        fOut.write("ServerAlias " + site["url"] + "\n")
-        fOut.write("DocumentRoot " + site["pathOut"] + "\n")
-        fOut.write('RedirectMatch ^/$ "/' + site["indexPage"] + '"\n')
-        fOut.write("</VirtualHost>" + "\n\n")
+    with open(configOut, "a", encoding="utf-8") as cOut:
+        cOut.write("<VirtualHost *:80>\n")
+        cOut.write("ServerName " + site["serverName"] + "\n")
+        cOut.write("ServerAlias " + site["url"] + "\n")
+        cOut.write("DocumentRoot " + site["pathOut"] + "\n")
+        cOut.write('RedirectMatch ^/$ "/' + site["indexPage"] + '"\n')
+        cOut.write("</VirtualHost>" + "\n\n")
 
+    with open(hostsOut, "a", encoding="utf-8") as hOut:
+        hOut.write("127.0.0.1 " + site["serverName"] + "\n")
+        hOut.write("127.0.0.1 " + site["url"] + "\n")
+        #hOut.write("\n\n")
 
 def fixSymLinks(folder, dirIn, dirOut):
     for root, _, files in os.walk(folder):
@@ -295,24 +299,28 @@ def main():
     dirIn = os.path.abspath(args.dirIn)
     dirOut = os.path.abspath(args.dirOut)
 
-    httpdConfOut = os.path.join(dirOut, "etc/sites.conf")
+    # Dir, files for output config
+    dirOutEtc = os.path.join(dirOut, "etc")
+    httpdConfOut = os.path.join(dirOutEtc, "sites.conf")
+    hostsOut = os.path.join(dirOutEtc, "hosts")
 
     # Read info on sites from config file
     sites = readApacheConfig(dirIn, dirOut)
 
-    # Create directory for output config
-    dirConfOut = os.path.dirname(httpdConfOut)
-    if not os.path.exists(dirConfOut):
-        os.makedirs(dirConfOut)
+    # Create output etc directory
+    if not os.path.exists(dirOutEtc):
+        os.makedirs(dirOutEtc)
 
-    # Remove output config file if it already exists
+    # Remove output config files they already exist
     if os.path.isfile(httpdConfOut):
         os.remove(httpdConfOut)
+    if os.path.isfile(hostsOut):
+        os.remove(hostsOut)
 
     # For each site, write output config, hosts entries
     # and copy data over to destination
     for site in sites:
-        writeConfig(site, httpdConfOut)
+        writeConfig(site, httpdConfOut, hostsOut)
         # TODO: write entries for hosts file!
         copyFiles(site, dirIn, dirOut)
 
