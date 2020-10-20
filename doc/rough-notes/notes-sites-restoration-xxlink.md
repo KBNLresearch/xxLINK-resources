@@ -12,7 +12,9 @@ Note: extracting as regular user will result in permission-related errors for so
 
 - dir `/home/www.xxlink.nl` contains logs (1994/95)
 - dir `/home/local/www` contains 26 folders that each hold a web site!
-- dir `/home/local/etc` contains [httpd configuration file](https://httpd.apache.org/docs/2.4/configuring.html) `httpd.conf` which defines the configuration for all sites. 
+- dir `/home/local/etc` contains [httpd configuration file](https://httpd.apache.org/docs/2.4/configuring.html) `httpd.conf` which defines the configuration for all sites.
+
+Note that this is a a config file for the [CERN httpd](https://en.wikipedia.org/wiki/CERN_httpd) server software; docs available [here](https://www.w3.org/Daemon/User/Config/Overview.html).
 
 
 ## Copy one site to var/www
@@ -31,64 +33,39 @@ sudo find /var/www/schiphol/cgi-bin -type f -exec chmod 755 {} \;
 Example:
 
 ```
-sudo python3 ~/kb/xxLINK-resources/scripts/restore-sites.py \ 
-    /home/johan/kb/xxLINK/tapes-DDS/2/file000001/home/local/www \
-    /home/johan/kb/xxLINK/siteData-DDS/2/www \
-    /home/johan/kb/xxLINK/tapes-DDS/2/file000001/home/local/etc/httpd.conf \
-    /home/johan/kb/xxLINK/siteData-DDS/2/etc/sites.conf
+sudo python3 ~/kb/xxLINK-resources/scripts/restore-sites.py /home/johan/kb/xxLINK/tapes-DDS/2/file000001 /var/www/xxLINK-DDS-2
 ```
 
-## Configure
+Output:
+
+- Folder *www* with sites data (including updated symbolic links, wherever possible)
+- Folder *etc* with auto-generated Apache config file and file with *hosts* entries
+- Additional files/folders that are referenced by symbolic links
+
+
+## Additional manual configuration
+
+1. Copy auto-generated Apache config file to Apache *sites-available* folder:
 
 ```
-sudo cp /etc/apache2/sites-available/ziklies.conf /etc/apache2/sites-available/schiphol.conf
+sudo cp /var/www/xxLINK-DDS-2/etc/sites.conf /etc/apache2/sites-available/xxLINK-DDS-2.conf
 ```
 
-Edit as follows:
+2. Copy contents of *etc/hosts* file (in output folder) into system */etc/hosts* file.
 
-
-```
-ServerName schiphol.nl:80
-ServerAdmin webmaster@localhost
-ServerName schiphol.nl
-ServerAlias www.schiphol.nl
-DocumentRoot /var/www/schiphol/root
-# Below line redirects DocumentRoot to home.htm
-RedirectMatch ^/$ "/home.htm"
+3. Activate the new Apache configuration:
 
 ```
-
-Add site domain to hosts file /etc/hosts (mind the TAB character!):
-
-127.0.0.1	schiphol.nl
-
-## Activate configuration
-
-```
-sudo a2dissite kbresearch.conf
-sudo a2ensite schiphol.conf
+sudo a2ensite xxLINK-DDS-2.conf
 ```
 
-## Restart server
+4. Restart Apache:
 
 ```
-sudo systemctl restart apache2
+sudo systemctl reload apache2
 ```
 
-## Try hosting from different folder
-
-```
-DocumentRoot /home/johan/kb/xxLINK/sites/schiphol/root
-```
-
-Results in 403 Forbidden. Probably possible to change through config, but don't want to go there (also bvc of possible security concerns), so instead added /var/www folder to daily backup schedule.
-
-## Firefox
-
-<https://stackoverflow.com/questions/50183899/firefox-cant-connect-to-a-local-site-but-chrome-can>
-
-
-browser.fixup.dns_first_for_single_words set to True
+All done!
 
 
 ## DDS tapes with website data
@@ -101,6 +78,70 @@ browser.fixup.dns_first_for_single_words set to True
 - 18? (file000002/html/www), doesn't look like production location.
 
 ## DLT tapes with website data
+
+## Rendering notes
+
+### DDS-2
+
+<http://nbbi.nl/home.htm>
+
+Uses obsolete image map navigation.
+
+<http://nl.fortis.com>
+
+Returns 404 (no html in directory)
+
+<http://mazda.nl/cgi-bin/dealer>
+
+Returns 404. Source:
+
+``` html
+<A HREF=/cgi-bin/dealer><IMG SRC=323.jpg WIDTH=188 HEIGHT=100 BORDER=0><BR>Of vind nu al de kortste weg naar de Mazda dealer</A>
+```
+
+Looking at httpd.conf:
+
+```
+Exec    /cgi-bin/*	/home/local/www/mazda/cgi-bin/*
+```
+
+Note path is outside of "root" dir, i.e.:
+
+```
+Map /*.map  /htbin/htimage/home/local/www/mazda/root/
+```
+
+So perhaps */cgi-bin/* needs ScriptAlias:
+
+<https://stackoverflow.com/questions/18903002/apache-scriptalias-cgi-bin-directory>
+
+
+## Scripts
+
+Many refs to locally installed applications/tools/custom software. Some examples:
+
+### Cameranet
+
+Mail form:
+
+```
+#!/usr/local/bin/ksh
+
+eval $(/home/local/www/cgi-bin/cgiparse -init)
+eval $(/home/local/www/cgi-bin/cgiparse -form)
+
+print "Location: http://www.cameranet.nl/ads/adv.htm"
+print ""
+
+FILENAME="/tmp/sads$$.tmp"    
+
+::
+::
+
+/usr/ucb/mail -s "Camera Magazine advertentie" redacted@redacted.nl redacted@redacted.nl <$FILENAME
+
+rm $FILENAME
+```
 
 ## Resources
 
