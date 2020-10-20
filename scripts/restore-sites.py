@@ -262,6 +262,7 @@ def copyFiles(site, dirIn, dirOut):
         print("WARNING: directory " + sourceDir + " does not exist", file=sys.stderr)
 
     # Executable (cgi-bin) dirs (can be multiple or none at all)
+    """
     for d in execDirs:
         for i, o in d.items():
             execSourceDir = os.path.abspath(i)
@@ -288,6 +289,7 @@ def copyFiles(site, dirIn, dirOut):
                             print("ERROR updating permissions for file " + thisFile, file=sys.stderr)
             else:
                 print("WARNING: directory " + execSourceDir + " does not exist", file=sys.stderr)
+    """
 
 
 def main():
