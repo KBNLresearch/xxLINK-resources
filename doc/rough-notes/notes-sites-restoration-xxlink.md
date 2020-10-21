@@ -79,6 +79,14 @@ All done!
 
 ## DLT tapes with website data
 
+- 1 (file000001/www (with another www subfolder with even more sites!)
+- 2 (file000001/www); Apache config files under apache.intel/conf.
+- 4
+- 6
+- 7 (11 GB!)
+
+
+
 ## Rendering notes
 
 ### DDS-2
@@ -118,7 +126,7 @@ So perhaps */cgi-bin/* needs ScriptAlias:
 
 ## Scripts
 
-Many refs to locally installed applications/tools/custom software. Some examples:
+Many dependencies on non-standard/obsolete versions of interpreters, refs to locally installed applications/tools/custom software. Some examples:
 
 ### Cameranet
 
@@ -143,8 +151,35 @@ FILENAME="/tmp/sads$$.tmp"
 rm $FILENAME
 ```
 
+
+## Solaris 1.2 install in qemu
+
+Create machine image:
+
+```
+qemu-img create -f qcow2 solaris112.qcow2 2G
+
+```
+
+Boot:
+
+```
+qemu-system-sparc -M SS-5 -m 128 -drive file=solaris112.qcow2,bus=0,unit=0,media=disk -drive file=Solaris1_1_2.iso,bus=0,unit=2,media=cdrom,readonly=on
+```
+
+Fails with:
+
+```
+qemu: could not load prom 'openbios-sparc32'
+```
+
+
 ## Resources
 
 - [Server-side Preservation of Dynamic Websites](https://publications.beeldengeluid.nl/pub/633/) (mentions ReproZip, need to look at this)
 
 - [Archaeology of the Amsterdam digital city; why digital data are dynamic and should be treated accordingly](https://www.tandfonline.com/doi/full/10.1080/24701475.2017.1309852)
+
+- [Playing with SunOS 4.1.4 SPARC on QEmu](http://defcon.no/sysadm/playing-with-sunos-4-1-4-on-qemu/) (but based on outdated qemu version!)
+
+- [Build your own SPARC workstation with QEMU and Solaris](https://learn.adafruit.com/build-your-own-sparc-with-qemu-and-solaris?view=all)
