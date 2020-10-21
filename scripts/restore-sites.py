@@ -91,6 +91,7 @@ def readApacheConfig(dirIn, dirOut):
     with open(configFile) as configIn:
         for line in configIn:
             if line.startswith("MultiHost"):
+                # TODO make sure that last entry of httpd.conf gets added to sites as well!
                 # Reset record counters
                 noMaps = 0
                 noExecs = 0
