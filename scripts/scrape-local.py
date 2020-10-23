@@ -102,23 +102,22 @@ def scapeSite(site, warcOut):
 
     # Add remaining files (and rewrite file paths as URLs)
     for root, dirs, files in os.walk(rootDir):
-            for filename in files:
-                # Full path
-                file_path = os.path.join(root, filename)
-                
-                # Construct url and add to list
-                #url = file_path.replace(rootDir, "http://" + ServerName)
-                url = file_path.replace(rootDir, "http://" + ServerAlias)
-                urls.append(url)
-            
-            for dirname in dirs:
-                # Full path
-                file_path = os.path.join(root, dirname)
-                
-                # Construct url and add to list
-                url = file_path.replace(rootDir, "http://" + ServerAlias)
-                urls.append(url)
+        for filename in files:
+            # Full path
+            file_path = os.path.join(root, filename)
 
+            # Construct url and add to list
+            #url = file_path.replace(rootDir, "http://" + ServerName)
+            url = file_path.replace(rootDir, "http://" + ServerAlias)
+            urls.append(url)
+
+        for dirname in dirs:
+            # Full path
+            file_path = os.path.join(root, dirname)
+
+            # Construct url and add to list
+            url = file_path.replace(rootDir, "http://" + ServerAlias)
+            urls.append(url)
 
     # Start capturing stuff
     with capture_http(warcOut):
@@ -130,7 +129,7 @@ def scapeSite(site, warcOut):
                 print(url)
                 raise
 
-    return(urls)
+    return urls
 
 
 def main():
@@ -153,7 +152,7 @@ def main():
     try:
         fUrls = open(urlsOut, "w", encoding="utf-8")
     except IOError:
-        msg = 'could not write to file ' + urlsOut
+        msg = 'could not open file ' + urlsOut
         errorExit(msg)
 
     # Process sites
@@ -162,9 +161,8 @@ def main():
 
         # Write URLs
         try:
-            outCSV = csv.writer(fUrls, delimiter=',', lineterminator='\n')
             for url in urls:
-                outCSV.writerow(url)
+                fUrls.write(url + '\n')
         except IOError:
             msg = 'could not write file ' + fUrls
             errorExit(msg)
