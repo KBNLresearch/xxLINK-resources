@@ -98,6 +98,15 @@ def scapeSite(site, warcOut):
                 #url = file_path.replace(rootDir, "http://" + ServerName)
                 url = file_path.replace(rootDir, "http://" + ServerAlias)
                 urls.append(url)
+            
+            for dirname in dirs:
+                # Full path
+                file_path = os.path.join(root, dirname)
+                
+                # Construct url and add to list
+                url = file_path.replace(rootDir, "http://" + ServerAlias)
+                urls.append(url)
+
 
     # Start capturing stuff
     with capture_http(warcOut):
