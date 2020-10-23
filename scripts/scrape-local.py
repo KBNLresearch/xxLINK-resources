@@ -1,5 +1,7 @@
 #! /usr/bin/env python3
 import os
+import sys
+import csv
 import argparse
 from warcio.capture_http import capture_http
 import requests
@@ -15,10 +17,20 @@ def parseCommandLine(parser):
                         action='store',
                         type=str,
                         help='output compressed WARC file')
+    parser.add_argument('urlsOut',
+                        action='store',
+                        type=str,
+                        help='output list of captured URLs')
 
     # Parse arguments
     arguments = parser.parse_args()
     return arguments
+
+def errorExit(msg):
+    """Print error to stderr and exit"""
+    msgString = ('ERROR: ' + msg + '\n')
+    sys.stderr.write(msgString)
+    sys.exit(1)
 
 
 def readConfig(configFile):
@@ -118,6 +130,8 @@ def scapeSite(site, warcOut):
                 print(url)
                 raise
 
+    return(urls)
+
 
 def main():
     """
@@ -129,23 +143,32 @@ def main():
     args = parseCommandLine(parser)
     configFile = os.path.abspath(args.configFile)
     warcOut = os.path.abspath(args.warcOut)
+    urlsOut = args.urlsOut
 
     # Read config file
     sites = readConfig(configFile)
-    print(sites)
+    #print(sites)
+
+    # Open URLs output file
+    try:
+        fUrls = open(urlsOut, "w", encoding="utf-8")
+    except IOError:
+        msg = 'could not write to file ' + urlsOut
+        errorExit(msg)
 
     # Process sites
     for site in sites:
-        scapeSite(site, warcOut)
-        #print(ServerName, ServerAlias, DocumentRoot)
+        urls = scapeSite(site, warcOut)
 
-    """
-    url = line.split()[1].strip()
-    siteInfo['url'] = url
-    siteInfo['serverName'] = url.replace("www.", "")
-    """
+        # Write URLs
+        try:
+            outCSV = csv.writer(fUrls, delimiter=',', lineterminator='\n')
+            for url in urls:
+                outCSV.writerow(url)
+        except IOError:
+            msg = 'could not write file ' + fUrls
+            errorExit(msg)
 
-    #siteName = "ziklies.home.xs4all.nl"
-    #scapeSite(siteName, warcOut)
+    fUrls.close()
 
 main()
