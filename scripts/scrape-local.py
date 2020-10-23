@@ -144,6 +144,15 @@ def main():
     warcOut = os.path.abspath(args.warcOut)
     urlsOut = args.urlsOut
 
+    # Remove warcOut if it already exists (otherwise multiple runs will add data
+    # to pre-existing version of the file)
+    if os.path.isfile(warcOut):
+        try:
+            os.remove(warcOut)
+        except:
+            msg = "cannot remove " + warcOut
+            errorExit(msg)
+
     # Read config file
     sites = readConfig(configFile)
     #print(sites)

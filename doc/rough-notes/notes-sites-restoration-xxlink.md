@@ -70,14 +70,15 @@ All done!
 
 ## DDS tapes with website data
 
-- 1 (file000003/local/www/root): xxLINK website + corporate sites as sub-sites. Note that links on front page uses some weird scripting, which doesn't work inb reconstructed version (also, scripts only print out URLS so don't understand how this originally worked).
+- 1 (file000003/local/www/root)
 - 2 (file000001/home/local/www)
 - 3 (file000003/local/www/root)
 - 4 (file000001/home/local/www)
 - 5 (file000001/home/local/www)
 - 6 (file000003/local/www/root)
 - 12 (file000003/local/www)
-- 14 (/file000001/home/local/www)
+- 14 (file000001/home/local/www)
+- 14 (file000003/local/WWW/doc_root)
 - 16 (file000003/local/www/root)
 - 18? (file000002/html/www), doesn't look like production location.
 
@@ -94,6 +95,15 @@ NOTE: where is XXLINK home page located?!
 
 
 ## Rendering notes
+
+### DDS-1
+
+xxLINK website + corporate sites as sub-sites.
+
+- Links on front page uses some weird scripting, which doesn't work inb reconstructed version (also, scripts only print out URLS so don't understand how this originally worked).
+
+- Some referenced resources are missing from source data (notably the 'nbt' directory)
+
 
 ### DDS-2
 
