@@ -78,11 +78,111 @@ All done!
 - 6 (file000003/local/www/root)
 - 12 (file000003/local/www)
 - 14 (file000001/home/local/www)
-- 14 (file000003/local/WWW/doc_root)
+- 15 (file000003/local/WWW/doc_root)
 - 16 (file000003/local/www/root)
+- 17? (file000002/html/www), doesn't look like production location.
 - 18? (file000002/html/www), doesn't look like production location.
 
-NOTE: where is XXLINK home page located?!
+### Setup of xxLINK portfolio site
+
+Copy files + set permissions:
+
+```
+sudo rsync -avhl ~/kb/xxLINK/tapes-DDS/3/file000003/local/www/root/ /var/www/xxLINK-DDS-3
+sudo find /var/www/xxLINK-DDS-3 -type d -exec chmod 755 {} \;
+sudo find /var/www/xxLINK-DDS-3 -type f -exec chmod 644 {} \;
+```
+
+Apache config - in this case we copy existing file from tape 1 to a new file:
+
+```
+sudo cp /etc/apache2/sites-available/xxLINK-DDS-1.conf /etc/apache2/sites-available/xxLINK-DDS-3.conf
+```
+
+Then edit DocumentRoot:
+
+```
+sudo nano /etc/apache2/sites-available/xxLINK-DDS-3.conf
+```
+
+Result:
+
+```
+<VirtualHost *:80>
+ServerName xxlink.nl
+ServerAlias www.xxlink.nl
+DocumentRoot /var/www/xxLINK-DDS-3
+RedirectMatch ^/$ "/home.htm"
+RedirectMatch ^(.*)/$ $1/home.htm
+</VirtualHost>
+```
+
+Deactivate existing config, activate new one:
+
+```
+sudo a2dissite xxLINK-DDS-1
+sudo a2ensite xxLINK-DDS-3
+sudo systemctl restart apache2
+
+```
+
+Capture to WARC (run from WARC output dir):
+
+```
+python3 ~/kb/xxLINK-resources/scripts/scrape-local.py /etc/apache2/sites-enabled/xxLINK-DDS-3.conf xxLINK-DDS-3.warc.gz xxLINK-DDS-3-urls.csv
+
+```
+
+Create new collection in pywayback and import WARC:
+
+```
+wb-manager init DDS-3
+wb-manager add DDS-3 ~/kb/xxLINK/warc/DDS/3/xxLINK-DDS-3.warc.gz
+```
+
+### Setup of multi-site dumps
+
+Run script to copy data, set permissions:
+
+```
+sudo python3 ~/kb/xxLINK-resources/scripts/restore-sites.py /home/johan/kb/xxLINK/tapes-DDS/4/file000001 /var/www/xxLINK-DDS-4
+```
+
+Copy generated Apache config file:
+
+```
+sudo cp /var/www/xxLINK-DDS-4/etc/sites.conf /etc/apache2/sites-available/xxLINK-DDS-4.conf
+```
+
+Manually add entries from `/var/www/xxLINK-DDS-4/etc/hosts` to `/etc/hosts` file.
+
+```
+sudo xed /etc/hosts /var/www/xxLINK-DDS-4/etc/hosts
+```
+
+Deactivate existing config, activate new one:
+
+```
+sudo a2dissite xxLINK-DDS-16
+sudo a2ensite xxLINK-DDS-4
+sudo systemctl restart apache2
+
+```
+
+Capture to WARC (run from WARC output dir):
+
+```
+python3 ~/kb/xxLINK-resources/scripts/scrape-local.py /etc/apache2/sites-enabled/xxLINK-DDS-4.conf xxLINK-DDS-4.warc.gz xxLINK-DDS-4-urls.csv
+
+```
+
+Create new collection in pywayback and import WARC:
+
+```
+wb-manager init DDS-4
+wb-manager add DDS-4 ~/kb/xxLINK/warc/DDS/4/xxLINK-DDS-4.warc.gz
+```
+
 
 ## DLT tapes with website data
 
@@ -98,7 +198,7 @@ NOTE: where is XXLINK home page located?!
 
 ### DDS-1
 
-xxLINK website + corporate sites as sub-sites.
+xxLINK website + corporate sites as sub-sites (but not under original URLs, looks like portfolio site).
 
 - Links on front page uses some weird scripting, which doesn't work inb reconstructed version (also, scripts only print out URLS so don't understand how this originally worked).
 
@@ -115,29 +215,42 @@ Uses obsolete image map navigation.
 
 Returns 404 (no html in directory)
 
-<http://mazda.nl/cgi-bin/dealer>
 
-Returns 404. Source:
+### DDS-3
 
-``` html
-<A HREF=/cgi-bin/dealer><IMG SRC=323.jpg WIDTH=188 HEIGHT=100 BORDER=0><BR>Of vind nu al de kortste weg naar de Mazda dealer</A>
+As DDS-1.
+
+### DDS-4
+
+Links that are supposed to point to xxLINK domain (which is not included in this dump) instead link to individual corporate domains. Example: page <http://localhost:8080/DDS-4/20201023153432/http://www.schiphol.nl/1/cantake.htm> links to <http://localhost:8080/DDS-4/20201023153432mp_/http://www.schiphol.nl/1/about.htm>. Looks like a config problem. In source:
+
+```html
+HTML-conversie: <A HREF=/1/about.htm>xxLINK</A> Internet Services
 ```
 
-Looking at httpd.conf:
+Many sites on this tape appear to be really early versions with hardly any content at all.
 
-```
-Exec    /cgi-bin/*	/home/local/www/mazda/cgi-bin/*
-```
+### DDS-6
 
-Note path is outside of "root" dir, i.e.:
+As DDS-1.
 
-```
-Map /*.map  /htbin/htimage/home/local/www/mazda/root/
-```
+### DDS-12
 
-So perhaps */cgi-bin/* needs ScriptAlias:
+- <http://localhost:8080/DDS-12/20201023162532/http://www.cameranet.nl/ads>: doesn't load
 
-<https://stackoverflow.com/questions/18903002/apache-scriptalias-cgi-bin-directory>
+- <http://www.cameranet.nl/ads/com/com.htm>: search results in no matches, but is included in URL list.
+
+### DDS-14
+
+REALLY early version, some sites are merely stubs without even an index page.
+
+### DDS-15
+
+As DDS-1.
+
+### DDS-16
+
+As DDS-1. Contrary to info on tape label ("www 31 jan '95 DUMP") most recent files date from January 1996, so this is probably a labeling errror.
 
 
 ## Scripts

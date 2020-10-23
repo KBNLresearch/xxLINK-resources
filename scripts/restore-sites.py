@@ -77,8 +77,10 @@ def readApacheConfig(dirIn, dirOut):
 
     # Construct paths
     wwwIn = os.path.join(dirIn, "home/local/www")
+    #wwwIn = os.path.join(dirIn, "local/www") # Only for tape 12!
     wwwOut = os.path.join(dirOut, "www")
     configFile = os.path.join(dirIn, "home/local/etc/httpd.conf")
+    #configFile = os.path.join(dirIn, "local/etc/httpd.conf") # Only for tape 12!
 
     # Prefix / suffix used in Map entries (need to be stripped)
     mapPrefix="/htbin/htimage/home/local/www"
