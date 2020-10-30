@@ -81,19 +81,40 @@ def readConfigDir(dirIn, dirOut):
     sites = []
 
     if os.path.exists(configDirIn):
-        for file in os.listdir(configDirIn):
-            thisFile = os.path.join(configDirIn, file)
-            print(thisFile)
+        for path in os.listdir(configDirIn):
+            thisPath = os.path.join(configDirIn, path)
+            if os.path.isfile(thisPath):
+                #print(thisPath)
+                siteInfo = readApacheConfig(thisPath)
+                print(siteInfo)
 
     return sites
 
 
-def readApacheConfig(dirIn, dirOut):
+def readApacheConfig(configFile):
     """
     Read Apache config file, extract interesting bits and return
-    list with dictionary for each site
+    them in dictionary
     """
 
+    siteInfo = {}
+    isApacheConfig = False
+
+    with open(configFile) as configIn:
+        # TODO: Include RewriteRule entries?
+        for line in configIn:
+            if line.startswith("<VirtualHost"):
+                isApacheConfig = True
+            if line.startswith("DocumentRoot"):
+                DocumentRoot = line.split()[1].strip()
+                siteInfo["DocumentRoot"] = DocumentRoot
+            if line.startswith("ServerName"):
+                ServerName = line.split()[1].strip()
+                siteInfo["ServerName"] = ServerName
+
+    siteInfo["isApacheConfig"] = isApacheConfig
+
+    """
     # Construct paths
     wwwIn = os.path.join(dirIn, "home/local/www")
     wwwOut = os.path.join(dirOut, "www")
@@ -173,8 +194,8 @@ def readApacheConfig(dirIn, dirOut):
                 noWelcomes += 1
                 siteInfo['indexPage'] = indexPage
 
-    return sites
-
+    """
+    return siteInfo
 
 def writeConfig(site, configOut, hostsOut):
     """Write output Apache config records for site"""
