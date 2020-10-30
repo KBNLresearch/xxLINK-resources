@@ -84,18 +84,21 @@ def readConfigDir(dirIn, dirOut):
         for path in os.listdir(configDirIn):
             thisPath = os.path.join(configDirIn, path)
             if os.path.isfile(thisPath):
-                #print(thisPath)
-                siteInfo = readApacheConfig(thisPath)
-                print(siteInfo)
-
+                siteInfo = readApacheConfig(thisPath, dirIn, dirOut)
+                if siteInfo["isApacheConfig"]:
+                    sites.append(siteInfo)
     return sites
 
 
-def readApacheConfig(configFile):
+def readApacheConfig(configFile, dirIn, dirOut):
     """
     Read Apache config file, extract interesting bits and return
     them in dictionary
     """
+
+    DocumentRootPrefix = "/export/home/local/www"
+    wwwIn = os.path.join(dirIn, "www")
+    wwwOut = os.path.join(dirOut, "www")
 
     siteInfo = {}
     isApacheConfig = False
@@ -106,95 +109,18 @@ def readApacheConfig(configFile):
             if line.startswith("<VirtualHost"):
                 isApacheConfig = True
             if line.startswith("DocumentRoot"):
-                DocumentRoot = line.split()[1].strip()
-                siteInfo["DocumentRoot"] = DocumentRoot
+                DocumentRootOrig = line.split()[1].strip()
+                # Construct source and destination paths
+                pathIn = DocumentRootOrig.replace(DocumentRootPrefix, wwwIn)
+                pathOut = DocumentRootOrig.replace(DocumentRootPrefix, wwwOut)
+                siteInfo["pathIn"] = pathIn
+                siteInfo["pathOut"] = pathOut
             if line.startswith("ServerName"):
                 ServerName = line.split()[1].strip()
                 siteInfo["ServerName"] = ServerName
 
     siteInfo["isApacheConfig"] = isApacheConfig
 
-    """
-    # Construct paths
-    wwwIn = os.path.join(dirIn, "home/local/www")
-    wwwOut = os.path.join(dirOut, "www")
-    configFile = os.path.join(dirIn, "home/local/etc/httpd.conf")
-
-    # Prefix / suffix used in Map entries (need to be stripped)
-    mapPrefix="/htbin/htimage/home/local/www"
-    mapSuffix="/*.map"
-    execSuffix="/*"
-
-    # List that holds individual site dictionaries
-    sites = []
-
-    with open(configFile) as configIn:
-        for line in configIn:
-            if line.startswith("MultiHost"):
-                # TODO make sure that last entry of httpd.conf gets added to sites as well!
-                # Reset record counters
-                noMaps = 0
-                noExecs = 0
-                noWelcomes = 0
-
-                # Append previous siteInfo dictionary to list
-                try:
-                    # Ignore test entries
-                    if not siteInfo['serverName'].startswith("test"):
-                        siteInfo['execPaths'] = execPaths
-                        sites.append(siteInfo)
-                except UnboundLocalError:
-                    # siteInfo, execPathsIn and execPathsOut don't
-                    # exist at start of first processed site
-                    pass
-
-                # Intialise empty siteInfo dictionary and execPath list
-                siteInfo = {}
-                execPaths = []
-
-                url = line.split()[1].strip()
-                siteInfo['url'] = url
-                siteInfo['serverName'] = url.replace("www.", "")
-
-            if line.startswith("Map") and noMaps == 0:
-                # Only read 1st map entry for a site
-                mapPath = line.split()[2].strip()
-
-                if mapPath != "/noproxy.htm":
-                    # Remove suffix
-                    mapPath = mapPath.replace(mapSuffix, "")
-
-                    # Construct source and destination paths
-                    pathIn = mapPath.replace(mapPrefix, wwwIn)
-                    pathOut = mapPath.replace(mapPrefix, wwwOut)
-
-                    siteInfo['pathIn'] = pathIn
-                    siteInfo['pathOut'] = pathOut
-                    noMaps += 1
-
-            if line.startswith("Exec"):
-                # Only read 1st map entry for a site
-                execPath = line.split()[2].strip()
-
-                if execPath not in ["/home/local/www/cgi-bin/*",
-                                    "/home/local/www//cgi-bin/*"]:
-                    # Remove suffix
-                    execPath = execPath.replace(execSuffix, "")
-                    
-                    # Construct source and destination paths
-                    execPathIn = execPath.replace("/home/local/www", wwwIn)
-                    execPathOut = execPath.replace("/home/local/www", wwwOut)
-
-                    # Store execPathIn and execPathout pair as dictionary and
-                    # add to list
-                    execPaths.append({execPathIn:execPathOut})
-
-            if line.startswith("Welcome") and noWelcomes == 0:
-                indexPage = line.split()[1].strip()
-                noWelcomes += 1
-                siteInfo['indexPage'] = indexPage
-
-    """
     return siteInfo
 
 def writeConfig(site, configOut, hostsOut):
@@ -350,6 +276,26 @@ def main():
     # Read info on sites from config file
     #sites = readApacheConfig(dirIn, dirOut)
     sites = readConfigDir(dirIn, dirOut)
+
+    ## TODO: in some case either ServerName or DocumentRoot are missing from config
+    # file. Mostly happens for .xxLINK domains, but also for www.hospitalitynet.org
+    # which imports a value using INCLUDE file. For now ignore these.
+
+    ## TEST
+    for site in sites:
+        try:
+            print(site["ServerName"])
+        except KeyError:
+            print("ERROR: ServerName misssing")
+        try:
+            print(site["pathIn"])
+        except KeyError:
+            print("ERROR: pathIn misssing")
+        try:
+            print(site["pathOut"])
+        except KeyError:
+            print("ERROR: pathOut misssing")
+    ## TEST
 
     """
     # Create output etc directory
