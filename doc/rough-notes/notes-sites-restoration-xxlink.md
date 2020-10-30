@@ -186,11 +186,40 @@ wb-manager add DDS-4 ~/kb/xxLINK/warc/DDS/4/xxLINK-DDS-4.warc.gz
 
 ## DLT tapes with website data
 
-- 1 (file000001/www (with another www subfolder with even more sites!)
+- 1 (file000001/www (with another www subfolder with what looks like the xxlink portfolio site.
 - 2 (file000001/www); Apache config files under apache.intel/conf.
 - 4
 - 6
 - 7 (11 GB!)
+
+## DLT tapes config
+
+### Tape 2
+
+```
+/media/johan/xxLINK/xxLINK-DLT/tapes-DLT/2/file000001/apache.intel/conf/httpd.conf.isobel
+```
+
+Apache config file w. VirtualHost entries. BUT only 34 entries vs 250 folders in www. Also ServerName values do not always reflect true domains where sites were hosted, e.g. `libris.xxLINK.nl`.
+
+So let's search the entir tape for "schiphol.nl" (which is not included in the config file):
+
+```
+grep -r "schiphol.nl" /media/johan/xxLINK/xxLINK-DLT/tapes-DLT/2/file000001 > schiphol.txt
+```
+
+### Tape 4
+
+Directory:
+
+```
+/media/johan/xxLINK/xxLINK-DLT/tapes-DLT/4/file000001/apache.intel/conf/configdb
+```
+
+- 478 files, each for 1 site
+
+- 375 folders in www
+
 
 
 
