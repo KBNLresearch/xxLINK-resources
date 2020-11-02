@@ -120,15 +120,13 @@ def writeConfig(site, configOut, hostsOut):
 
     with open(configOut, "a", encoding="utf-8") as cOut:
         cOut.write("<VirtualHost *:80>\n")
-        cOut.write("ServerName " + site["serverName"] + "\n")
-        cOut.write("ServerAlias " + site["url"] + "\n")
+        cOut.write("ServerName " + site["ServerName"] + "\n")
         cOut.write("DocumentRoot " + site["pathOut"] + "\n")
-        cOut.write('RedirectMatch ^/$ "/' + site["indexPage"] + '"\n')
         cOut.write("</VirtualHost>" + "\n\n")
 
     with open(hostsOut, "a", encoding="utf-8") as hOut:
-        hOut.write("127.0.0.1 " + site["serverName"] + "\n")
-        hOut.write("127.0.0.1 " + site["url"] + "\n")
+        hOut.write("127.0.0.1 " + site["ServerName"] + "\n")
+        hOut.write("127.0.0.1 " + "http://" + site["ServerName"] + "\n")
         #hOut.write("\n\n")
 
 def fixSymLinks(folder, dirIn, dirOut):
@@ -274,6 +272,17 @@ def main():
     #sites = readApacheConfig(dirIn, dirOut)
     sites = readConfigDir(dirIn, dirOut)
 
+
+    # Create output etc directory
+    if not os.path.exists(dirOutEtc):
+        os.makedirs(dirOutEtc)
+
+    # Remove output config files they already exist
+    if os.path.isfile(httpdConfOut):
+        os.remove(httpdConfOut)
+    if os.path.isfile(hostsOut):
+        os.remove(hostsOut)
+
     ## TODO: in some case either ServerName or DocumentRoot are missing from config
     # file. Mostly happens for .xxLINK domains, but also for www.hospitalitynet.org
     # which imports a value using INCLUDE file. For now ignore these.
@@ -298,29 +307,15 @@ def main():
             # Construct source and destination paths
             pathIn = DocumentRoot.replace(DocumentRootPrefix, wwwIn)
             pathOut = DocumentRoot.replace(DocumentRootPrefix, wwwOut)
-
+            site["pathIn"] = pathIn
+            site["pathOut"] = pathOut
+            ## TEST
             print(ServerName, pathIn, pathOut)
-
-    ## TEST
-
-    """
-    # Create output etc directory
-    if not os.path.exists(dirOutEtc):
-        os.makedirs(dirOutEtc)
-
-    # Remove output config files they already exist
-    if os.path.isfile(httpdConfOut):
-        os.remove(httpdConfOut)
-    if os.path.isfile(hostsOut):
-        os.remove(hostsOut)
-
-    # For each site, write output config, hosts entries
-    # and copy data over to destination
-    for site in sites:
-        writeConfig(site, httpdConfOut, hostsOut)
-        # TODO: write entries for hosts file!
-        copyFiles(site, dirIn, dirOut)
-    """
+            ## TEST
+            # Write config entry
+            writeConfig(site, httpdConfOut, hostsOut)
+            # Copy files
+            #copyFiles(site, dirIn, dirOut)
 
 if __name__ == "__main__":
     main()
