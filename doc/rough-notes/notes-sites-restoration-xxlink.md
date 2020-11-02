@@ -191,6 +191,8 @@ wb-manager add DDS-4 ~/kb/xxLINK/warc/DDS/4/xxLINK-DDS-4.warc.gz
 - 4
 - 6
 - 7 (11 GB!)
+- 12
+- 14
 
 ## DLT tapes config
 
@@ -202,11 +204,13 @@ wb-manager add DDS-4 ~/kb/xxLINK/warc/DDS/4/xxLINK-DDS-4.warc.gz
 
 Apache config file w. VirtualHost entries. BUT only 34 entries vs 250 folders in www. Also ServerName values do not always reflect true domains where sites were hosted, e.g. `libris.xxLINK.nl`.
 
+<!--
 So let's search the entir tape for "schiphol.nl" (which is not included in the config file):
 
 ```
 grep -r "schiphol.nl" /media/johan/xxLINK/xxLINK-DLT/tapes-DLT/2/file000001 > schiphol.txt
 ```
+-->
 
 ### Tape 4
 

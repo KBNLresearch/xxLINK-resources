@@ -96,10 +96,6 @@ def readApacheConfig(configFile, dirIn, dirOut):
     them in dictionary
     """
 
-    DocumentRootPrefix = "/export/home/local/www"
-    wwwIn = os.path.join(dirIn, "www")
-    wwwOut = os.path.join(dirOut, "www")
-
     siteInfo = {}
     isApacheConfig = False
 
@@ -109,12 +105,8 @@ def readApacheConfig(configFile, dirIn, dirOut):
             if line.startswith("<VirtualHost"):
                 isApacheConfig = True
             if line.startswith("DocumentRoot"):
-                DocumentRootOrig = line.split()[1].strip()
-                # Construct source and destination paths
-                pathIn = DocumentRootOrig.replace(DocumentRootPrefix, wwwIn)
-                pathOut = DocumentRootOrig.replace(DocumentRootPrefix, wwwOut)
-                siteInfo["pathIn"] = pathIn
-                siteInfo["pathOut"] = pathOut
+                DocumentRoot = line.split()[1].strip()
+                siteInfo["DocumentRoot"] = DocumentRoot
             if line.startswith("ServerName"):
                 ServerName = line.split()[1].strip()
                 siteInfo["ServerName"] = ServerName
@@ -268,6 +260,11 @@ def main():
     dirIn = os.path.abspath(args.dirIn)
     dirOut = os.path.abspath(args.dirOut)
 
+    # String constants
+    DocumentRootPrefix = "/export/home/local/www"
+    wwwIn = os.path.join(dirIn, "www")
+    wwwOut = os.path.join(dirOut, "www")
+
     # Dir, files for output config
     dirOutEtc = os.path.join(dirOut, "etc")
     httpdConfOut = os.path.join(dirOutEtc, "sites.conf")
@@ -281,20 +278,29 @@ def main():
     # file. Mostly happens for .xxLINK domains, but also for www.hospitalitynet.org
     # which imports a value using INCLUDE file. For now ignore these.
 
-    ## TEST
     for site in sites:
+        hasServerName = True
+        hasDocumentRoot = True
         try:
-            print(site["ServerName"])
+            ServerName = site["ServerName"]
         except KeyError:
-            print("ERROR: ServerName misssing")
+            hasServerName = False
         try:
-            print(site["pathIn"])
+            DocumentRoot = site["DocumentRoot"]
         except KeyError:
-            print("ERROR: pathIn misssing")
-        try:
-            print(site["pathOut"])
-        except KeyError:
-            print("ERROR: pathOut misssing")
+            if ServerName == "www.hospitalitynet.org":
+                # Fix for missing DocumentRoot hospitalitynet
+                DocumentRoot = "/export/home/local/www/hospitorg/root"
+            else:
+                hasDocumentRoot = False
+        
+        if hasServerName and hasDocumentRoot:
+            # Construct source and destination paths
+            pathIn = DocumentRoot.replace(DocumentRootPrefix, wwwIn)
+            pathOut = DocumentRoot.replace(DocumentRootPrefix, wwwOut)
+
+            print(ServerName, pathIn, pathOut)
+
     ## TEST
 
     """
