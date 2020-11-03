@@ -160,9 +160,13 @@ def copyFiles(site, dirIn, dirOut):
     """
     sourceDir = os.path.abspath(site["pathIn"])
     destDir = os.path.abspath(site["pathOut"])
-    execDirs = site["execPaths"]
+    #execDirs = site["execPaths"]
 
+    print("====== PROCESSING SITE " + site["ServerName"], file=sys.stderr)
     print("====== PROCESSING SOURCE DIR " + sourceDir, file=sys.stderr)
+    ## TEST
+    #print("sourceDir : " + sourceDir + "\n destDir: " + destDir)
+    ## TEST
 
     # Source dir tree
     if os.path.exists(sourceDir):
@@ -179,7 +183,7 @@ def copyFiles(site, dirIn, dirOut):
         fixSymLinks(destDir, dirIn, dirOut)
 
         # Update permissions
-        for root, dirs, files in os.walk(destDir): 
+        for root, dirs, files in os.walk(destDir):
             for d in dirs:
                 thisDir = os.path.join(root, d)
                 try:
@@ -195,36 +199,6 @@ def copyFiles(site, dirIn, dirOut):
                     print("ERROR updating permissions for file " + thisFile, file=sys.stderr)
     else:
         print("WARNING: directory " + sourceDir + " does not exist", file=sys.stderr)
-
-    # Executable (cgi-bin) dirs (can be multiple or none at all)
-    """
-    for d in execDirs:
-        for i, o in d.items():
-            execSourceDir = os.path.abspath(i)
-            execDestDir = os.path.abspath(o)
-            print("====== PROCESSING EXEC DIR " + execSourceDir, file=sys.stderr)
-
-            if os.path.exists(execSourceDir):
-                try:
-                    copy_tree(execSourceDir, execDestDir, verbose=1, update=1, preserve_symlinks=1)
-                except:
-                    print("ERROR copying " + execSourceDir, file=sys.stderr)
-
-                # Search destination dir for broken symbolic links, fix them and copy
-                # underlying data
-                fixSymLinks(execDestDir, dirIn, dirOut)
-
-                # Update permissions
-                for root, dirs, files in os.walk(execDestDir):  
-                    for f in files:
-                        thisFile = os.path.join(root, f)
-                        try:
-                            os.chmod(thisFile, 0o755)
-                        except OSError:
-                            print("ERROR updating permissions for file " + thisFile, file=sys.stderr)
-            else:
-                print("WARNING: directory " + execSourceDir + " does not exist", file=sys.stderr)
-    """
 
 
 def main():
@@ -288,12 +262,12 @@ def main():
             site["pathIn"] = pathIn
             site["pathOut"] = pathOut
             ## TEST
-            print(ServerName, pathIn, pathOut)
+            #print(ServerName, pathIn, pathOut)
             ## TEST
             # Write config entry
             writeConfig(site, httpdConfOut, hostsOut)
             # Copy files
-            #copyFiles(site, dirIn, dirOut)
+            copyFiles(site, dirIn, dirOut)
 
 if __name__ == "__main__":
     main()

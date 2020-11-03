@@ -196,6 +196,25 @@ wb-manager add DDS-4 ~/kb/xxLINK/warc/DDS/4/xxLINK-DDS-4.warc.gz
 
 ## DLT tapes config
 
+### Tape 1
+
+Directory:
+
+```
+/media/johan/xxLINK/xxLINK-DLT/tapes-DLT/1/file000001/apache.intel/conf/configdb
+```
+
+Apache config file for each site. BUT:
+
+- Some config files don't contain DocumentRoot entry, which is imported through INCLUDE. Applies to hospitalitynet. Hard-coded fix in script.
+
+- File www/sbi/adfo/root/beeld/rtv/9646: broken symlink.
+
+- Dir www/hospitorg/root/davey symlink to dir 'davey' in parent dir (www/hospitorg/davey)
+
+- Dir www/hospitorg/root/vlist: symlink to ../../hospitalitynet/root/vlist.
+
+
 ### Tape 2
 
 ```
