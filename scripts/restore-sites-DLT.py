@@ -47,28 +47,6 @@ def errorExit(msg):
     sys.exit(1)
 
 
-def launchSubProcess(args):
-    """Launch subprocess and return exit code, stdout and stderr"""
-    try:
-        p = sub.Popen(args, stdout=sub.PIPE, stderr=sub.PIPE, shell=False)
-        output, errors = p.communicate()
-
-        # Decode to UTF8
-        outputAsString = output.decode('utf-8')
-        errorsAsString = errors.decode('utf-8')
-
-        exitStatus = p.returncode
-
-    except Exception:
-        # I don't even want to to start thinking how one might end up here ...
-
-        exitStatus = -99
-        outputAsString = ""
-        errorsAsString = ""
-
-    return exitStatus, outputAsString, errorsAsString
-
-
 def readConfigDir(dirIn, dirOut):
     """
     Read config dir, filter site config files and return
