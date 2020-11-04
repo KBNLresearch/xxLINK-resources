@@ -17,8 +17,6 @@ import csv
 import argparse
 from shutil import which
 from shutil import copyfile
-from distutils.dir_util import copy_tree
-
 
 def parseCommandLine(parser):
     """Command line parser"""
@@ -123,7 +121,7 @@ def main():
     # String constants
     DocumentRootPrefix = "/export/home/local/www"
     wwwIn = os.path.join(dirIn, "www")
-    wwwOut = os.path.join(dirOut, "www")
+    wwwOut = os.path.join("/var/www", os.path.basename(dirOut))
 
     # Dir, files for output config
     dirOutEtc = os.path.join(dirOut, "etc")
