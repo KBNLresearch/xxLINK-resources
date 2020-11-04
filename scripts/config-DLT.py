@@ -85,7 +85,7 @@ def readApacheConfig(configFile, dirIn, dirOut):
             if line.startswith("ServerName"):
                 ServerName = line.split()[1].strip()
                 siteInfo["ServerName"] = ServerName
-                 if not ServerName.startswith("www."):
+                if not ServerName.startswith("www."):
                     ServerAlias = "www." + ServerName
                     siteInfo["ServerAlias"] = ServerAlias
 
