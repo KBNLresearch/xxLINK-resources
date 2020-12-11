@@ -34,7 +34,10 @@ def readConfig(configFile):
     vHostEnd = "</VirtualHost>"
 
     # List that holds individual site dictionaries
-    sites = [] 
+    sites = []
+
+    # Intialise empty siteInfo dictionary
+    siteInfo = {}
 
     with open(configFile) as configIn:
         for line in configIn:
@@ -62,15 +65,6 @@ def readConfig(configFile):
 
             if line.startswith("ServerAlias"):
                 ServerAlias = line.split()[1].strip()
-
-        # Append final siteInfo dictionary to list
-        try:
-            siteInfo['ServerName'] = ServerName
-            siteInfo['ServerAlias'] = ServerAlias
-            siteInfo['DocumentRoot'] = DocumentRoot
-            sites.append(siteInfo)
-        except UnboundLocalError:
-            pass
 
     return sites
 
@@ -162,11 +156,11 @@ def main():
 
     # Read config file
     sites = readConfig(configFile)
-    #print(sites)
 
     # Process sites
     for site in sites:
-        scrapeSite(site)
+        print(site["ServerName"])
+        #scrapeSite(site)
 
 
 main()
