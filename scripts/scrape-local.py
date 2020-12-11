@@ -13,14 +13,6 @@ def parseCommandLine(parser):
                         action='store',
                         type=str,
                         help='Apache config file with VirtualHost entries for each site')
-    parser.add_argument('warcOut',
-                        action='store',
-                        type=str,
-                        help='output compressed WARC file')
-    parser.add_argument('urlsOut',
-                        action='store',
-                        type=str,
-                        help='output list of captured URLs')
 
     # Parse arguments
     arguments = parser.parse_args()
@@ -83,7 +75,7 @@ def readConfig(configFile):
     return sites
 
 
-def scapeSite(site, warcOut):
+def scrapeSite(site):
     """Scrape one site"""
 
     ServerName = site["ServerName"]
@@ -91,6 +83,27 @@ def scapeSite(site, warcOut):
     DocumentRoot = site["DocumentRoot"]
 
     rootDir = os.path.abspath(DocumentRoot)
+
+    # Use ServerName as basis for output WARC name
+    warcOut = ServerName + ".tar.gz"
+
+    # Remove warcOut if it already exists (otherwise multiple runs will add data
+    # to pre-existing version of the file)
+    if os.path.isfile(warcOut):
+        try:
+            os.remove(warcOut)
+        except:
+            msg = "cannot remove " + warcOut
+            errorExit(msg)
+
+    # Open URLs output file
+    urlsOut = ServerName + ".urls.csv"
+
+    try:
+        fUrls = open(urlsOut, "w", encoding="utf-8")
+    except IOError:
+        msg = 'could not open file ' + urlsOut
+        errorExit(msg)
 
     # List of URLs to scrape
     urls = []
@@ -128,54 +141,32 @@ def scapeSite(site, warcOut):
             except:
                 print(url)
                 raise
+            try:
+                fUrls.write(url + '\n')
+            except IOError:
+                msg = 'could not write file ' + fUrls
+                errorExit(msg)
 
-    return urls
+    fUrls.close()
 
 
 def main():
     """
-    Scrape locally rendered sites to compressed WARC.
+    Scrape locally rendered sites to compressed WARCs (one for each site)
     """
 
     # Parse arguments from command line
     parser = argparse.ArgumentParser(description='Scrape locally rendered sites to compressed WARC')
     args = parseCommandLine(parser)
     configFile = os.path.abspath(args.configFile)
-    warcOut = os.path.abspath(args.warcOut)
-    urlsOut = args.urlsOut
-
-    # Remove warcOut if it already exists (otherwise multiple runs will add data
-    # to pre-existing version of the file)
-    if os.path.isfile(warcOut):
-        try:
-            os.remove(warcOut)
-        except:
-            msg = "cannot remove " + warcOut
-            errorExit(msg)
 
     # Read config file
     sites = readConfig(configFile)
     #print(sites)
 
-    # Open URLs output file
-    try:
-        fUrls = open(urlsOut, "w", encoding="utf-8")
-    except IOError:
-        msg = 'could not open file ' + urlsOut
-        errorExit(msg)
-
     # Process sites
     for site in sites:
-        urls = scapeSite(site, warcOut)
+        scrapeSite(site)
 
-        # Write URLs
-        try:
-            for url in urls:
-                fUrls.write(url + '\n')
-        except IOError:
-            msg = 'could not write file ' + fUrls
-            errorExit(msg)
-
-    fUrls.close()
 
 main()
