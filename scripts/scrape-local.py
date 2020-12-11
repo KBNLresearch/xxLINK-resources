@@ -79,7 +79,7 @@ def scrapeSite(site):
     rootDir = os.path.abspath(DocumentRoot)
 
     # Use ServerName as basis for output WARC name
-    warcOut = ServerName + ".tar.gz"
+    warcOut = ServerName + ".warc.gz"
 
     # Remove warcOut if it already exists (otherwise multiple runs will add data
     # to pre-existing version of the file)
@@ -157,10 +157,25 @@ def main():
     # Read config file
     sites = readConfig(configFile)
 
+    # Open output list of all sites
+    sitesOut = "sites.csv"
+
+    try:
+        fSites = open(sitesOut, "w", encoding="utf-8")
+    except IOError:
+        msg = 'could not open file ' + sitesOut
+        errorExit(msg)
+
     # Process sites
     for site in sites:
-        print(site["ServerName"])
-        #scrapeSite(site)
+        #print(site["ServerName"])
+        scrapeSite(site)
+        try:
+            fSites.write(site["ServerName"] + '\n')
+        except IOError:
+            msg = 'could not write file ' + fSites
+            errorExit(msg)
 
+    fSites.close()
 
 main()
