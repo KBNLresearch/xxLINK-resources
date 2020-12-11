@@ -1,6 +1,26 @@
 # xxLINK WARC capture and rendering notes
 
-These describe the capture process of the restored xxLINK sites to WARC, and how these WARCs can be played back.
+These notes describe the capture process of the restored xxLINK sites to WARC, and how these WARCs can be played back.
+
+## Preparation: activate required server configuration
+
+Assuming we have multiple Apache server configurations set up (typically one for each tape, as described in the [Apache Notes](./xxLINK-apache-notes.md)):
+
+1. Open tape-specific and system-wide hosts files in text editor as sudo, e.g.:
+
+    ```
+    sudo xed /etc/hosts /var/www/xxLINK-DDS-2/etc/hosts
+    ```
+
+    Then manually copy entries from tape-specific (`/var/www/xxLINK-DDS-2/etc/hosts`) file to system wide (`/etc/hosts`) file, and save the updated file.
+
+2. Deactivate any currently active Apache configurations, and activate the new one, e.g.:
+
+```
+sudo a2dissite *
+sudo a2ensite xxLINK-DDS-2
+sudo systemctl restart apache2
+```
 
 ## Capture local sites to compressed warc files
 
@@ -62,4 +82,4 @@ Archive now accessible from browser at below link:
 <http://localhost:8080/DDS-2/>
 
 Use the domains listed in the *sites.csv* file to locate specific sites (currently pywb doesn't offer any option to browse the archive).
- 
+
