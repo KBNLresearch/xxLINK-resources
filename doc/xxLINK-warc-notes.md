@@ -4,6 +4,8 @@ These notes describe the capture process of the restored xxLINK sites to WARC, a
 
 ## Preparation: activate required server configuration
 
+### Multi-site dumps)
+
 Assuming we have multiple Apache server configurations set up (typically one for each tape, as described in the [Apache Notes](./xxLINK-apache-notes.md)):
 
 1. Open tape-specific and system-wide hosts files in text editor as sudo, e.g.:
@@ -21,6 +23,33 @@ sudo a2dissite *
 sudo a2ensite xxLINK-DDS-2
 sudo systemctl restart apache2
 ```
+
+### xxLINK portfolio site dumps
+
+The only contain the xxlink.nl site, so the above procedure is repaced by the simpler:
+
+1. Open system-wide hosts file as sudo:
+
+    ```
+    sudo xed /etc/hosts
+    ```
+
+    Add these two lines (if they're not there already):
+
+    ```
+    127.0.0.1 xxlink.nl
+    127.0.0.1 www.xxlink.nl
+    ```
+    Then save the updated file.
+
+2. Deactivate any currently active Apache configurations, and activate the new one, e.g.:
+
+```
+sudo a2dissite *
+sudo a2ensite xxLINK-DDS-1
+sudo systemctl restart apache2
+```
+    
 
 ## Capture local sites to compressed warc files
 
