@@ -4,7 +4,7 @@ These notes describe the capture process of the restored xxLINK sites to WARC, a
 
 ## Preparation: activate required server configuration
 
-### Multi-site dumps)
+### Multi-site dumps
 
 Assuming we have multiple Apache server configurations set up (typically one for each tape, as described in the [Apache Notes](./xxLINK-apache-notes.md)):
 
@@ -49,7 +49,6 @@ sudo a2dissite *
 sudo a2ensite xxLINK-DDS-1
 sudo systemctl restart apache2
 ```
-    
 
 ## Capture local sites to compressed warc files
 
@@ -76,7 +75,7 @@ In addition it also creates a file *sites.csv* with the *ServerName* values of a
 Install pywb:
 
 ```
-python3 -m install --user pywb
+python3 -m pip install --user pywb
 ```
 
 (BTW installation process reports `Segmentation fault (core dumped)` at end of install, but after this everything seems to work fine.)

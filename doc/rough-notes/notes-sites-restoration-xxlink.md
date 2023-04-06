@@ -166,7 +166,6 @@ Deactivate existing config, activate new one:
 sudo a2dissite xxLINK-DDS-16
 sudo a2ensite xxLINK-DDS-4
 sudo systemctl restart apache2
-
 ```
 
 Capture to WARC (run from WARC output dir):
@@ -242,8 +241,6 @@ Directory:
 - 478 files, each for 1 site
 
 - 375 folders in www
-
-
 
 
 ## Rendering notes
@@ -353,6 +350,7 @@ Fails with:
 ```
 qemu: could not load prom 'openbios-sparc32'
 ```
+
 
 
 ## Resources
