@@ -39,6 +39,29 @@ into this:
 ```
 Listen 127.0.0.1:80
 ```
+To be sure also change the following lines:
+
+```
+<IfModule ssl_module>
+	Listen 443
+</IfModule>
+
+<IfModule mod_gnutls.c>
+	Listen 443
+</IfModule>
+```
+
+To:
+
+```
+<IfModule ssl_module>
+	Listen 127.0.0.1:443
+</IfModule>
+
+<IfModule mod_gnutls.c>
+	Listen 127.0.0.1:443
+</IfModule>
+```
 
 Save the *ports.conf* file, and restart the web server using:
 
